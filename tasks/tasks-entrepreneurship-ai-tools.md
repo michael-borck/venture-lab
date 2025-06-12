@@ -1,0 +1,81 @@
+## Relevant Files
+
+- `src-tauri/src/main.rs` - Main Rust backend file for Tauri commands and AI integrations
+- `src-tauri/src/settings.rs` - Settings management and persistence module
+- `src-tauri/src/ai_providers.rs` - AI provider abstraction layer with trait-based design for all 4 providers
+- `src/App.jsx` - Main React application with routing and layout
+- `src/components/Sidebar.jsx` - Sidebar navigation component
+- `src/components/Dashboard.jsx` - Main dashboard page component
+- `src/components/SettingsPage.jsx` - Enhanced settings page with connection testing
+- `src/pages/IdeaForge.jsx` - Idea generation tool page
+- `src/pages/GlobalCompass.jsx` - Market analysis tool page
+- `src/pages/PitchPerfect.jsx` - Pitch coaching tool page
+- `src/pages/PRDGenerator.jsx` - PRD creation tool page
+- `src/lib/tauri_frontend_api.js` - Frontend API wrapper for Tauri commands
+- `src/lib/prompts.js` - AI prompt templates and utilities
+- `src/lib/utils.js` - Shared utility functions
+- `src/components/shared/LoadingSpinner.jsx` - Shared loading component
+- `src/components/shared/ErrorBoundary.jsx` - Error handling component
+- `src/components/shared/Button.jsx` - Reusable button component
+- `src/components/shared/Card.jsx` - Reusable card component
+- `src/styles/globals.css` - Global styles and CSS variables
+- `package.json` - Frontend dependencies and scripts
+- `src-tauri/Cargo.toml` - Rust dependencies
+- `src-tauri/tauri.conf.json` - Tauri configuration with permissions
+
+### Notes
+
+- Unit tests should typically be placed alongside the code files they are testing (e.g., `ai_providers.rs` and `ai_providers.test.rs` in the same directory).
+- Use `npm test` to run frontend tests and `cargo test` to run Rust backend tests.
+- Tauri commands need to be registered in `main.rs` and exposed to the frontend via `tauri_frontend_api.js`.
+
+## Tasks
+
+- [x] 1.0 Implement Settings Infrastructure
+  - [x] 1.1 Create Rust settings module with serialization/deserialization for AI provider configs
+  - [x] 1.2 Implement Tauri commands for loading, saving, and testing settings
+  - [x] 1.3 Create AI provider abstraction layer supporting OpenAI, Anthropic, Gemini, and Ollama
+  - [x] 1.4 Add connection testing functionality that validates API keys and base URLs
+  - [x] 1.5 Implement model listing functionality for each AI provider
+  - [x] 1.6 Enhance frontend SettingsPage with connection testing UI and model selection
+  - [x] 1.7 Add settings persistence to local storage/config files
+- [ ] 2.0 Build Main Dashboard with Sidebar Navigation
+  - [ ] 2.1 Create responsive sidebar component with tool navigation and settings access
+  - [ ] 2.2 Implement main layout component that integrates sidebar with content area
+  - [ ] 2.3 Build dashboard page with tool overview cards matching HTML mock designs
+  - [ ] 2.4 Add routing system for navigation between tools using React Router
+  - [ ] 2.5 Implement recent projects/work tracking and display
+  - [ ] 2.6 Create shared UI components (buttons, cards, loading states) for consistency
+  - [ ] 2.7 Add responsive design for mobile and desktop layouts
+- [ ] 3.0 Implement Idea Forge Tool
+  - [ ] 3.1 Create IdeaForge page component with form inputs matching HTML mock
+  - [ ] 3.2 Implement creativity slider (temperature control) and industry selection
+  - [ ] 3.3 Build AI prompt engineering system for business idea generation
+  - [ ] 3.4 Add target market analysis and value proposition generation
+  - [ ] 3.5 Implement challenge identification and opportunity mapping
+  - [ ] 3.6 Create results display with structured idea presentation
+  - [ ] 3.7 Add idea saving and export functionality
+- [ ] 4.0 Build Global Compass Tool
+  - [ ] 4.1 Create GlobalCompass page component with country/region selection
+  - [ ] 4.2 Implement budget range and timeline selection inputs
+  - [ ] 4.3 Build market entry strategy AI analysis system
+  - [ ] 4.4 Add cultural considerations and business practices analysis
+  - [ ] 4.5 Implement regulatory environment and competitive landscape mapping
+  - [ ] 4.6 Create risk assessment and mitigation recommendations
+  - [ ] 4.7 Add analysis export and reporting functionality
+- [ ] 5.0 Create Pitch Perfect Tool
+  - [ ] 5.1 Create PitchPerfect page component with pitch type and audience selection
+  - [ ] 5.2 Implement pitch content input with character counting and validation
+  - [ ] 5.3 Build feedback style slider and coaching intensity controls
+  - [ ] 5.4 Create AI pitch analysis system with multi-dimensional scoring
+  - [ ] 5.5 Implement audience-specific feedback and improvement suggestions
+  - [ ] 5.6 Add concrete rewrite recommendations and enhanced opening suggestions
+  - [ ] 5.7 Create pitch revision tracking and comparison functionality
+- [ ] 6.0 Implement PRD Generator Tool
+  - [ ] 6.1 Create PRDGenerator page component with multi-step workflow UI
+  - [ ] 6.2 Implement step navigation with progress tracking and validation
+  - [ ] 6.3 Build AI-guided clarifying questions system with dynamic question generation
+  - [ ] 6.4 Create answers collection and review interface
+  - [ ] 6.5 Implement professional PRD document generation with structured formatting
+  - [ ] 6.6 Add user story generation and technical consideration mapping
+  - [ ] 6.7 Create document export functionality with multiple format support (Markdown, PDF)

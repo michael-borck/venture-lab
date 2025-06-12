@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Entrepreneurship Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .hero-section {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+            padding: 40px 20px;
+        }
+        
+        .hero-section h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            font-weight: 700;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        .hero-section p {
+            font-size: 1.3em;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 30px;
+            line-height: 1.6;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+        
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.8;
+            animation: fadeInUp 1s ease-out 0.4s both;
+        }
+        
+        .tools-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            padding: 0 20px;
+        }
+        
+        .tool-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 1s ease-out both;
+        }
+        
+        .tool-card:nth-child(1) { animation-delay: 0.6s; }
+        .tool-card:nth-child(2) { animation-delay: 0.8s; }
+        .tool-card:nth-child(3) { animation-delay: 1s; }
+        .tool-card:nth-child(4) { animation-delay: 1.2s; }
+        
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b6b, #ff8e53);
+            transition: height 0.3s ease;
+        }
+        
+        .tool-card:hover::before {
+            height: 6px;
+        }
+        
+        .tool-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+        
+        .tool-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+            display: block;
+        }
+        
+        .tool-card:nth-child(1) .tool-icon { color: #ff6b6b; }
+        .tool-card:nth-child(2) .tool-icon { color: #4facfe; }
+        .tool-card:nth-child(3) .tool-icon { color: #ff9a9e; }
+        .tool-card:nth-child(4) .tool-icon { color: #a8edea; }
+        
+        .tool-title {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .tool-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 1em;
+        }
+        
+        .tool-features {
+            list-style: none;
+            margin-bottom: 25px;
+        }
+        
+        .tool-features li {
+            color: #555;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+            font-size: 0.95em;
+        }
+        
+        .tool-features li::before {
+            content: '✨';
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        
+        .launch-btn {
+            width: 100%;
+            padding: 15px 25px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .launch-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            background: linear-gradient(135deg, #5a6fd8, #6a42a0);
+        }
+        
+        .launch-btn:active {
+            transform: translateY(0);
+        }
+        
+        .coming-soon {
+            background: linear-gradient(135deg, #a0a0a0, #808080);
+            cursor: not-allowed;
+        }
+        
+        .coming-soon:hover {
+            transform: none;
+            box-shadow: none;
+            background: linear-gradient(135deg, #a0a0a0, #808080);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            color: white;
+            opacity: 0.8;
+        }
+        
+        .footer p {
+            margin-bottom: 10px;
+        }
+        
+        .ai-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .floating-element {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @media (max-width: 768px) {
+            .hero-section h1 {
+                font-size: 2.5em;
+            }
+            
+            .hero-section p {
+                font-size: 1.1em;
+            }
+            
+            .tools-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .tool-card {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-section">
+        <h1 class="floating-element">🚀 AI-Powered Entrepreneurship Tools</h1>
+        <p>Leverage cutting-edge AI to accelerate your business journey. From idea generation to market analysis to pitch perfection.</p>
+        <div class="subtitle">Built for the modern entrepreneur | Powered by generative AI</div>
+    </div>
+    
+    <div class="tools-container">
+        <div class="tool-card">
+            <div class="ai-badge">🤖 Generative AI</div>
+            <div class="tool-icon">💡</div>
+            <h2 class="tool-title">Idea Forge</h2>
+            <p class="tool-description">
+                AI-powered business idea generator that creates innovative concepts in real-time. 
+                Not a database lookup—true generative intelligence that synthesizes new opportunities.
+            </p>
+            <ul class="tool-features">
+                <li>Dynamic creativity slider (temperature control)</li>
+                <li>Industry-specific idea generation</li>
+                <li>Target market analysis</li>
+                <li>Instant value proposition creation</li>
+                <li>Challenge identification</li>
+            </ul>
+            <button class="launch-btn" onclick="openTool('idea-forge')">
+                ⚡ Launch Idea Forge
+            </button>
+        </div>
+        
+        <div class="tool-card">
+            <div class="ai-badge">🌍 Global Intelligence</div>
+            <div class="tool-icon">🧭</div>
+            <h2 class="tool-title">Global Compass</h2>
+            <p class="tool-description">
+                Navigate international markets with AI-powered insights. Get real-time analysis 
+                of cultural, regulatory, and competitive landscapes for any global expansion.
+            </p>
+            <ul class="tool-features">
+                <li>Market entry strategy recommendations</li>
+                <li>Cultural considerations & business practices</li>
+                <li>Regulatory environment analysis</li>
+                <li>Competitive landscape mapping</li>
+                <li>Risk assessment & mitigation</li>
+            </ul>
+            <button class="launch-btn" onclick="openTool('global-compass')">
+                🎯 Launch Global Compass
+            </button>
+        </div>
+        
+        <div class="tool-card">
+            <div class="ai-badge">🎤 Smart Coaching</div>
+            <div class="tool-icon">🎭</div>
+            <h2 class="tool-title">Pitch Perfect</h2>
+            <p class="tool-description">
+                Your AI presentation coach that analyzes pitch content and provides detailed 
+                feedback on structure, persuasiveness, and audience fit with personalized improvements.
+            </p>
+            <ul class="tool-features">
+                <li>Multi-dimensional scoring system</li>
+                <li>Audience-specific feedback</li>
+                <li>Adjustable coaching intensity</li>
+                <li>Concrete improvement suggestions</li>
+                <li>Rewrite recommendations</li>
+            </ul>
+            <button class="launch-btn" onclick="openTool('pitch-perfect')">
+                🎯 Launch Pitch Perfect
+            </button>
+        </div>
+        
+        <div class="tool-card">
+            <div class="ai-badge">📋 Document Creator</div>
+            <div class="tool-icon">📄</div>
+            <h2 class="tool-title">PRD Generator</h2>
+            <p class="tool-description">
+                Transform business ideas into professional Product Requirements Documents. 
+                AI-guided process that asks smart questions and generates developer-ready specs.
+            </p>
+            <ul class="tool-features">
+                <li>Interactive requirement gathering</li>
+                <li>Smart clarifying questions</li>
+                <li>Professional document formatting</li>
+                <li>User story generation</li>
+                <li>Technical consideration mapping</li>
+            </ul>
+            <button class="launch-btn" onclick="openTool('prd-generator')">
+                📋 Launch PRD Generator
+            </button>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p><strong>Educational AI Tools for Entrepreneurship & Global Business</strong></p>
+        <p>Experience the power of generative AI in business strategy and innovation</p>
+        <div style="margin-top: 20px; font-size: 0.9em;">
+            Built to demonstrate AI capabilities in education • Not just rule-based systems
+        </div>
+    </div>
+
+    <script>
+        function openTool(toolName) {
+            // In a real implementation, you would navigate to the actual tool pages
+            // For this demo, we'll simulate opening the tools
+            
+            const toolUrls = {
+                'idea-forge': '#idea-forge',
+                'global-compass': '#global-compass', 
+                'pitch-perfect': '#pitch-perfect',
+                'prd-generator': '#prd-generator'
+            };
+            
+            if (toolUrls[toolName]) {
+                // Create a popup or modal to show the tool
+                // In production, you'd navigate to separate pages or load components
+                showToolModal(toolName);
+            }
+        }
+        
+        function showToolModal(toolName) {
+            const toolNames = {
+                'idea-forge': 'Idea Forge',
+                'global-compass': 'Global Compass',
+                'pitch-perfect': 'Pitch Perfect',
+                'prd-generator': 'PRD Generator'
+            };
+            
+            // Simple demonstration - in real app, load the actual tool
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    padding: 40px;
+                    border-radius: 20px;
+                    text-align: center;
+                    max-width: 500px;
+                    margin: 20px;
+                ">
+                    <h2 style="color: #333; margin-bottom: 20px;">🚀 ${toolNames[toolName]}</h2>
+                    <p style="color: #666; margin-bottom: 30px; line-height: 1.6;">
+                        In a production environment, this would launch the full ${toolNames[toolName]} application 
+                        with all interactive features and AI capabilities.
+                        ${toolName === 'prd-generator' ? '<br><br><strong>PRD Generator</strong> would guide you through creating professional Product Requirements Documents with AI-powered clarifying questions.' : ''}
+                    </p>
+                    <button onclick="this.parentElement.parentElement.remove()" style="
+                        padding: 12px 24px;
+                        background: linear-gradient(135deg, #667eea, #764ba2);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        cursor: pointer;
+                    ">Close</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+        
+        // Add some interactive animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.tool-card');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationPlayState = 'running';
+                    }
+                });
+            });
+            
+            cards.forEach(card => {
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>

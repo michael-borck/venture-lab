@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRD Generator - Product Requirements Document Creator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            padding: 0 20px;
+        }
+        
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            flex: 1;
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e1e5e9;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .step.active .step-number {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .step.completed .step-number {
+            background: #10b981;
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 0.9em;
+            color: #666;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .step.active .step-label {
+            color: #667eea;
+        }
+        
+        .step-line {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background: #e1e5e9;
+            z-index: -1;
+        }
+        
+        .step:last-child .step-line {
+            display: none;
+        }
+        
+        .step.completed .step-line {
+            background: #10b981;
+        }
+        
+        .phase {
+            display: none;
+        }
+        
+        .phase.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #a8edea;
+            box-shadow: 0 0 0 3px rgba(168, 237, 234, 0.1);
+        }
+        
+        .question-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .question-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .question-subtitle {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 15px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #374151;
+            border: 2px solid #e1e5e9;
+        }
+        
+        .btn-secondary:hover {
+            background: #e1e5e9;
+        }
+        
+        .prd-preview {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 12px;
+            padding: 25px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-bottom: 20px;
+        }
+        
+        .prd-section {
+            margin-bottom: 20px;
+        }
+        
+        .prd-heading {
+            color: #fbbf24;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .prd-subheading {
+            color: #60a5fa;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .download-section {
+            background: #f0f9ff;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 2px dashed #0ea5e9;
+            margin-bottom: 20px;
+        }
+        
+        .download-section h3 {
+            color: #0ea5e9;
+            margin-bottom: 10px;
+        }
+        
+        .filename-display {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            color: #374151;
+            margin: 10px 0;
+            border: 1px solid #e1e5e9;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e1e5e9;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            transition: width 0.5s ease;
+        }
+        
+        .answers-summary {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .answer-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        
+        .answer-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .answer-question {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 5px;
+        }
+        
+        .answer-response {
+            color: #666;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .step-indicator {
+                flex-wrap: wrap;
+                gap: 20px;
+            }
+            
+            .step {
+                min-width: 80px;
+            }
+            
+            .step-line {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 PRD Generator</h1>
+            <p>AI-Guided Product Requirements Document Creator</p>
+        </div>
+        
+        <div class="content">
+            <!-- Progress Bar -->
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            
+            <!-- Step Indicator -->
+            <div class="step-indicator">
+                <div class="step active" id="step1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Initial Idea</div>
+                    <div class="step-line"></div>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Clarifying Questions</div>
+                    <div class="step-line"></div>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Review & Refine</div>
+                    <div class="step-line"></div>
+                </div>
+                <div class="step" id="step4">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Generate PRD</div>
+                </div>
+            </div>
+
+            <!-- Phase 1: Initial Prompt -->
+            <div class="phase active" id="phase1">
+                <h2 style="color: #333; margin-bottom: 20px;">Step 1: Describe Your Feature Idea</h2>
+                <p style="color: #666; margin-bottom: 25px; line-height: 1.6;">
+                    Provide a brief description of the feature or functionality you want to build. 
+                    Don't worry about details yet - we'll gather those in the next step.
+                </p>
+                
+                <div class="input-group">
+                    <label for="initialIdea">Feature Description:</label>
+                    <textarea id="initialIdea" placeholder="e.g., A user profile management system that allows users to update their personal information, upload profile pictures, and manage privacy settings..."></textarea>
+                </div>
+                
+                <div class="input-group">
+                    <label for="featureName">Feature Name (for file naming):</label>
+                    <input type="text" id="featureName" placeholder="e.g., user-profile-management">
+                </div>
+                
+                <button class="btn btn-primary" onclick="startClarification()">
+                    Next: Clarifying Questions →
+                </button>
+            </div>
+
+            <!-- Phase 2: Clarifying Questions -->
+            <div class="phase" id="phase2">
+                <h2 style="color: #333; margin-bottom: 20px;">Step 2: Answer Clarifying Questions</h2>
+                <p style="color: #666; margin-bottom: 25px; line-height: 1.6;">
+                    To create a comprehensive PRD, I need to understand the details of your feature. 
+                    Please answer the following questions as thoroughly as possible.
+                </p>
+                
+                <div id="questionsContainer">
+                    <!-- Questions will be dynamically generated here -->
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <button class="btn btn-secondary" onclick="goToStep(1)">
+                        ← Back to Feature Description
+                    </button>
+                    <button class="btn btn-primary" onclick="reviewAnswers()">
+                        Next: Review Answers →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Phase 3: Review & Refine -->
+            <div class="phase" id="phase3">
+                <h2 style="color: #333; margin-bottom: 20px;">Step 3: Review Your Answers</h2>
+                <p style="color: #666; margin-bottom: 25px; line-height: 1.6;">
+                    Review your responses below. You can go back to make changes or proceed to generate your PRD.
+                </p>
+                
+                <div class="answers-summary" id="answersSummary">
+                    <!-- Answers summary will be populated here -->
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <button class="btn btn-secondary" onclick="goToStep(2)">
+                        ← Edit Answers
+                    </button>
+                    <button class="btn btn-primary" onclick="generatePRD()">
+                        Generate PRD →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Phase 4: Generated PRD -->
+            <div class="phase" id="phase4">
+                <h2 style="color: #333; margin-bottom: 20px;">Step 4: Your Product Requirements Document</h2>
+                
+                <div class="download-section">
+                    <h3>📄 PRD Generated Successfully!</h3>
+                    <p>Your Product Requirements Document is ready for download.</p>
+                    <div class="filename-display" id="filenameDisplay">
+                        prd-example.md
+                    </div>
+                    <button class="btn btn-primary" onclick="downloadPRD()">
+                        📥 Download PRD
+                    </button>
+                </div>
+                
+                <h3 style="color: #333; margin-bottom: 15px;">Preview:</h3>
+                <div class="prd-preview" id="prdPreview">
+                    <!-- Generated PRD content will appear here -->
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <button class="btn btn-secondary" onclick="goToStep(3)">
+                        ← Back to Review
+                    </button>
+                    <button class="btn btn-primary" onclick="startOver()">
+                        🔄 Create New PRD
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Application state
+        let currentStep = 1;
+        let answers = {};
+        let generatedPRD = '';
+        
+        const clarifyingQuestions = [
+            {
+                id: 'problem',
+                title: 'Problem & Goal',
+                subtitle: 'What problem does this feature solve?',
+                question: 'What specific problem does this feature solve for the user? What is the main goal we want to achieve?'
+            },
+            {
+                id: 'targetUser',
+                title: 'Target User',
+                subtitle: 'Who will use this feature?',
+                question: 'Who is the primary user of this feature? Describe their role, technical expertise, and context.'
+            },
+            {
+                id: 'coreActions',
+                title: 'Core Functionality',
+                subtitle: 'What actions should users be able to perform?',
+                question: 'Describe the key actions a user should be able to perform with this feature. What are the main workflows?'
+            },
+            {
+                id: 'userStories',
+                title: 'User Stories',
+                subtitle: 'Provide specific user stories',
+                question: 'Could you provide 2-3 user stories? Format: "As a [type of user], I want to [perform an action] so that [benefit]."'
+            },
+            {
+                id: 'acceptance',
+                title: 'Success Criteria',
+                subtitle: 'How will we know when it\'s done?',
+                question: 'How will we know when this feature is successfully implemented? What are the key acceptance criteria?'
+            },
+            {
+                id: 'nonGoals',
+                title: 'Scope & Boundaries',
+                subtitle: 'What should this feature NOT do?',
+                question: 'Are there any specific things this feature should NOT include? What\'s explicitly out of scope?'
+            },
+            {
+                id: 'dataRequirements',
+                title: 'Data Requirements',
+                subtitle: 'What data is needed?',
+                question: 'What kind of data does this feature need to display, store, or manipulate? Any data sources or integrations?'
+            },
+            {
+                id: 'designConsiderations',
+                title: 'Design & UI',
+                subtitle: 'Any design requirements?',
+                question: 'Are there any specific UI/UX requirements, design guidelines, or existing components to follow?'
+            },
+            {
+                id: 'edgeCases',
+                title: 'Edge Cases',
+                subtitle: 'What could go wrong?',
+                question: 'Are there any potential edge cases, error conditions, or special scenarios we should consider?'
+            }
+        ];
+        
+        function updateProgress() {
+            const progress = (currentStep - 1) * 25;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+        
+        function updateSteps() {
+            for (let i = 1; i <= 4; i++) {
+                const step = document.getElementById(`step${i}`);
+                step.classList.remove('active', 'completed');
+                
+                if (i < currentStep) {
+                    step.classList.add('completed');
+                } else if (i === currentStep) {
+                    step.classList.add('active');
+                }
+            }
+        }
+        
+        function showPhase(phaseNumber) {
+            document.querySelectorAll('.phase').forEach(phase => {
+                phase.classList.remove('active');
+            });
+            document.getElementById(`phase${phaseNumber}`).classList.add('active');
+        }
+        
+        function goToStep(step) {
+            currentStep = step;
+            updateProgress();
+            updateSteps();
+            showPhase(step);
+        }
+        
+        function startClarification() {
+            const initialIdea = document.getElementById('initialIdea').value.trim();
+            const featureName = document.getElementById('featureName').value.trim();
+            
+            if (!initialIdea) {
+                alert('Please provide a feature description before proceeding.');
+                return;
+            }
+            
+            if (!featureName) {
+                alert('Please provide a feature name for file naming.');
+                return;
+            }
+            
+            answers.initialIdea = initialIdea;
+            answers.featureName = featureName;
+            
+            generateQuestions();
+            goToStep(2);
+        }
+        
+        function generateQuestions() {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+            
+            clarifyingQuestions.forEach(q => {
+                const questionCard = document.createElement('div');
+                questionCard.className = 'question-card';
+                questionCard.innerHTML = `
+                    <div class="question-title">${q.title}</div>
+                    <div class="question-subtitle">${q.subtitle}</div>
+                    <textarea id="answer_${q.id}" placeholder="Your answer..." style="margin-top: 10px;">${answers[q.id] || ''}</textarea>
+                `;
+                container.appendChild(questionCard);
+            });
+        }
+        
+        function collectAnswers() {
+            clarifyingQuestions.forEach(q => {
+                const answer = document.getElementById(`answer_${q.id}`).value.trim();
+                answers[q.id] = answer;
+            });
+        }
+        
+        function reviewAnswers() {
+            collectAnswers();
+            
+            const summaryContainer = document.getElementById('answersSummary');
+            summaryContainer.innerHTML = '';
+            
+            // Add initial idea
+            const initialItem = document.createElement('div');
+            initialItem.className = 'answer-item';
+            initialItem.innerHTML = `
+                <div class="answer-question">Feature Description:</div>
+                <div class="answer-response">${answers.initialIdea}</div>
+            `;
+            summaryContainer.appendChild(initialItem);
+            
+            // Add all answers
+            clarifyingQuestions.forEach(q => {
+                if (answers[q.id]) {
+                    const item = document.createElement('div');
+                    item.className = 'answer-item';
+                    item.innerHTML = `
+                        <div class="answer-question">${q.title}:</div>
+                        <div class="answer-response">${answers[q.id]}</div>
+                    `;
+                    summaryContainer.appendChild(item);
+                }
+            });
+            
+            goToStep(3);
+        }
+        
+        function generatePRD() {
+            // Generate the PRD content based on answers
+            const prdContent = createPRDContent();
+            generatedPRD = prdContent;
+            
+            // Update filename display
+            const filename = `prd-${answers.featureName}.md`;
+            document.getElementById('filenameDisplay').textContent = filename;
+            
+            // Display PRD preview
+            document.getElementById('prdPreview').textContent = prdContent;
+            
+            goToStep(4);
+        }
+        
+        function createPRDContent() {
+            const featureName = answers.featureName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            
+            let prd = `# Product Requirements Document: ${featureName}\n\n`;
+            
+            // Introduction/Overview
+            prd += `## 1. Introduction/Overview\n\n`;
+            prd += `${answers.initialIdea}\n\n`;
+            if (answers.problem) {
+                prd += `**Problem Statement:** ${answers.problem}\n\n`;
+            }
+            
+            // Goals
+            prd += `## 2. Goals\n\n`;
+            if (answers.acceptance) {
+                prd += `${answers.acceptance}\n\n`;
+            } else {
+                prd += `- Deliver a functional ${featureName} feature\n`;
+                prd += `- Improve user experience and engagement\n`;
+                prd += `- Meet user needs as defined in this document\n\n`;
+            }
+            
+            // User Stories
+            prd += `## 3. User Stories\n\n`;
+            if (answers.userStories) {
+                prd += `${answers.userStories}\n\n`;
+            } else {
+                prd += `- As a ${answers.targetUser || 'user'}, I want to use this feature so that I can achieve my goals\n\n`;
+            }
+            
+            // Functional Requirements
+            prd += `## 4. Functional Requirements\n\n`;
+            if (answers.coreActions) {
+                const actions = answers.coreActions.split(/[.!?]\s+/).filter(s => s.trim());
+                actions.forEach((action, index) => {
+                    prd += `${index + 1}. The system must ${action.toLowerCase().trim()}\n`;
+                });
+            } else {
+                prd += `1. The system must provide the core functionality described in the overview\n`;
+                prd += `2. The system must be accessible to the target user group\n`;
+                prd += `3. The system must handle standard user interactions appropriately\n`;
+            }
+            prd += '\n';
+            
+            // Non-Goals
+            prd += `## 5. Non-Goals (Out of Scope)\n\n`;
+            if (answers.nonGoals) {
+                prd += `${answers.nonGoals}\n\n`;
+            } else {
+                prd += `- Features not explicitly mentioned in this PRD\n`;
+                prd += `- Advanced customization options (for future releases)\n\n`;
+            }
+            
+            // Design Considerations
+            if (answers.designConsiderations) {
+                prd += `## 6. Design Considerations\n\n`;
+                prd += `${answers.designConsiderations}\n\n`;
+            }
+            
+            // Technical Considerations
+            if (answers.dataRequirements) {
+                prd += `## 7. Technical Considerations\n\n`;
+                prd += `**Data Requirements:** ${answers.dataRequirements}\n\n`;
+            }
+            
+            // Success Metrics
+            prd += `## 8. Success Metrics\n\n`;
+            prd += `- Feature completion within timeline\n`;
+            prd += `- User acceptance testing pass rate > 90%\n`;
+            prd += `- No critical bugs in production\n`;
+            if (answers.acceptance) {
+                prd += `- ${answers.acceptance}\n`;
+            }
+            prd += '\n';
+            
+            // Open Questions
+            prd += `## 9. Open Questions\n\n`;
+            if (answers.edgeCases) {
+                prd += `**Edge Cases to Address:** ${answers.edgeCases}\n\n`;
+            }
+            prd += `- Performance requirements and scalability considerations\n`;
+            prd += `- Integration testing approach\n`;
+            prd += `- Rollout and deployment strategy\n\n`;
+            
+            // Footer
+            prd += `---\n\n`;
+            prd += `**Document Info:**\n`;
+            prd += `- Created: ${new Date().toLocaleDateString()}\n`;
+            prd += `- Target Audience: Junior Developer\n`;
+            prd += `- File: prd-${answers.featureName}.md\n`;
+            
+            return prd;
+        }
+        
+        function downloadPRD() {
+            const filename = `prd-${answers.featureName}.md`;
+            const blob = new Blob([generatedPRD], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        function startOver() {
+            currentStep = 1;
+            answers = {};
+            generatedPRD = '';
+            
+            // Clear form fields
+            document.getElementById('initialIdea').value = '';
+            document.getElementById('featureName').value = '';
+            
+            updateProgress();
+            updateSteps();
+            showPhase(1);
+        }
+        
+        // Initialize
+        updateProgress();
+        updateSteps();
+    </script>
+</body>
+</html>

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Compass - Market Entry Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        .input-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input[type="text"], select, textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="text"]:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+        
+        .slider-group {
+            margin-bottom: 25px;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .slider {
+            flex: 1;
+            height: 8px;
+            border-radius: 5px;
+            background: #e1e5e9;
+            outline: none;
+            appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4facfe;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4facfe;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .slider-value {
+            min-width: 120px;
+            font-weight: 600;
+            color: #4facfe;
+        }
+        
+        .generate-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .results {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 20px;
+            border-left: 4px solid #4facfe;
+        }
+        
+        .results h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .analysis-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-left: 3px solid #10b981;
+        }
+        
+        .section-title {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .section-content {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #4facfe;
+            font-style: italic;
+        }
+        
+        .prompt-display {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 3px solid #10b981;
+        }
+        
+        .prompt-label {
+            font-weight: 600;
+            color: #10b981;
+            margin-bottom: 8px;
+        }
+        
+        .prompt-text {
+            font-family: 'Courier New', monospace;
+            color: #374151;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+        
+        .risk-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .risk-low { background: #dcfce7; color: #166534; }
+        .risk-medium { background: #fef3c7; color: #92400e; }
+        .risk-high { background: #fecaca; color: #991b1b; }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Global Compass</h1>
+            <p>AI-Assisted Market Entry Explorer</p>
+        </div>
+        
+        <div class="content">
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="product">Product/Service:</label>
+                    <input type="text" id="product" placeholder="e.g., SaaS platform, eco-friendly packaging, fitness app">
+                </div>
+                
+                <div class="input-group">
+                    <label for="region">Target Region/Country:</label>
+                    <select id="region">
+                        <option value="">Select a region...</option>
+                        <option value="North America">North America</option>
+                        <option value="Europe">Europe</option>
+                        <option value="Asia-Pacific">Asia-Pacific</option>
+                        <option value="Latin America">Latin America</option>
+                        <option value="Middle East">Middle East</option>
+                        <option value="Africa">Africa</option>
+                        <option value="United States">United States</option>
+                        <option value="Canada">Canada</option>
+                        <option value="United Kingdom">United Kingdom</option>
+                        <option value="Germany">Germany</option>
+                        <option value="France">France</option>
+                        <option value="Japan">Japan</option>
+                        <option value="China">China</option>
+                        <option value="India">India</option>
+                        <option value="Australia">Australia</option>
+                        <option value="Brazil">Brazil</option>
+                        <option value="Mexico">Mexico</option>
+                        <option value="Singapore">Singapore</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="budget">Estimated Budget:</label>
+                    <select id="budget">
+                        <option value="">Select budget range...</option>
+                        <option value="Under $50k">Under $50k</option>
+                        <option value="$50k - $250k">$50k - $250k</option>
+                        <option value="$250k - $1M">$250k - $1M</option>
+                        <option value="$1M - $5M">$1M - $5M</option>
+                        <option value="Over $5M">Over $5M</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="timeline">Entry Timeline:</label>
+                    <select id="timeline">
+                        <option value="">Select timeline...</option>
+                        <option value="3-6 months">3-6 months</option>
+                        <option value="6-12 months">6-12 months</option>
+                        <option value="1-2 years">1-2 years</option>
+                        <option value="2+ years">2+ years</option>
+                    </select>
+                </div>
+                
+                <div class="input-group full-width">
+                    <label for="context">Additional Context (optional):</label>
+                    <textarea id="context" rows="3" placeholder="Specific concerns, target demographics, competitive advantages, regulatory considerations..."></textarea>
+                </div>
+            </div>
+            
+            <div class="slider-group">
+                <label for="detail">Analysis Detail Level:</label>
+                <div class="slider-container">
+                    <span>Overview</span>
+                    <input type="range" id="detail" class="slider" min="1" max="10" value="5">
+                    <span>Deep Dive</span>
+                    <div class="slider-value" id="detailValue">Balanced Analysis</div>
+                </div>
+            </div>
+            
+            <button class="generate-btn" onclick="generateAnalysis()">
+                🎯 Analyze Market Entry
+            </button>
+            
+            <div id="promptDisplay" class="prompt-display" style="display: none;">
+                <div class="prompt-label">Generated Analysis Prompt:</div>
+                <div class="prompt-text" id="promptText"></div>
+            </div>
+            
+            <div id="results" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const detailSlider = document.getElementById('detail');
+        const detailValue = document.getElementById('detailValue');
+        
+        const detailLabels = {
+            1: "Quick Overview",
+            2: "Basic Analysis", 
+            3: "Standard Report",
+            4: "Detailed Review",
+            5: "Balanced Analysis",
+            6: "Comprehensive Study",
+            7: "In-depth Analysis",
+            8: "Expert Assessment",
+            9: "Strategic Deep Dive",
+            10: "Complete Due Diligence"
+        };
+        
+        detailSlider.addEventListener('input', function() {
+            detailValue.textContent = detailLabels[this.value];
+        });
+        
+        function generateAnalysis() {
+            const product = document.getElementById('product').value.trim();
+            const region = document.getElementById('region').value;
+            const budget = document.getElementById('budget').value;
+            const timeline = document.getElementById('timeline').value;
+            const context = document.getElementById('context').value.trim();
+            const detail = document.getElementById('detail').value;
+            
+            if (!product || !region) {
+                alert('Please enter a product/service and select a target region!');
+                return;
+            }
+            
+            // Generate the prompt
+            const prompt = generatePrompt(product, region, budget, timeline, context, detail);
+            
+            // Display the prompt
+            const promptDisplay = document.getElementById('promptDisplay');
+            const promptText = document.getElementById('promptText');
+            promptText.textContent = prompt;
+            promptDisplay.style.display = 'block';
+            
+            // Show loading
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <div class="results">
+                    <h3>🌍 Market Entry Analysis</h3>
+                    <div class="loading">Analyzing global market opportunities... 🎯</div>
+                </div>
+            `;
+            resultsDiv.style.display = 'block';
+            
+            // Simulate AI response
+            setTimeout(() => {
+                displayMockResults(product, region, detail);
+            }, 3000);
+        }
+        
+        function generatePrompt(product, region, budget, timeline, context, detail) {
+            let detailLevel = detail <= 3 ? "concise" : detail <= 7 ? "detailed" : "comprehensive";
+            
+            let prompt = `Provide a ${detailLevel} market entry analysis for: ${product} in ${region}`;
+            
+            if (budget) prompt += `\nBudget: ${budget}`;
+            if (timeline) prompt += `\nTimeline: ${timeline}`;
+            if (context) prompt += `\nAdditional context: ${context}`;
+            
+            prompt += `\n\nPlease analyze:
+1. Market Opportunity & Size
+2. Cultural Considerations & Business Practices
+3. Regulatory & Legal Requirements
+4. Competitive Landscape
+5. Entry Strategy Recommendations
+6. Risk Assessment
+7. Success Factors & KPIs
+
+Detail Level: ${detail}/10 (${detailLevel} analysis)`;
+            
+            return prompt;
+        }
+        
+        function displayMockResults(product, region, detail) {
+            const resultsDiv = document.getElementById('results');
+            
+            // Mock analysis based on inputs
+            const riskLevel = Math.floor(Math.random() * 3); // 0=low, 1=medium, 2=high
+            const riskClasses = ['risk-low', 'risk-medium', 'risk-high'];
+            const riskTexts = ['Low Risk', 'Medium Risk', 'High Risk'];
+            
+            let html = `
+                <div class="results">
+                    <h3>🌍 Market Entry Analysis: ${product} in ${region}</h3>
+                    
+                    <div class="analysis-section">
+                        <div class="section-title">
+                            📊 Market Opportunity
+                            <span class="${riskClasses[riskLevel]} risk-indicator">${riskTexts[riskLevel]}</span>
+                        </div>
+                        <div class="section-content">
+                            The ${region} market shows ${riskLevel === 0 ? 'strong' : riskLevel === 1 ? 'moderate' : 'challenging'} potential for ${product}. 
+                            Market size is estimated at ${riskLevel === 0 ? '$2.5B with 8% annual growth' : riskLevel === 1 ? '$1.2B with 4% annual growth' : '$800M with limited growth'}. 
+                            ${detail >= 7 ? `Key drivers include increasing digitalization, changing consumer preferences, and regulatory shifts toward sustainability. Target segments include tech-savvy millennials (35%), enterprise customers (40%), and early adopters (25%).` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="analysis-section">
+                        <div class="section-title">🌐 Cultural Considerations</div>
+                        <div class="section-content">
+                            ${region === 'Japan' ? 'Japanese business culture emphasizes long-term relationships, consensus building, and attention to detail. Gift-giving customs and business card etiquette are crucial.' : 
+                              region === 'Germany' ? 'German business culture values punctuality, direct communication, and technical expertise. Formal presentations and detailed planning are expected.' :
+                              region === 'China' ? 'Chinese business culture prioritizes relationship building (guanxi), face-saving, and hierarchical respect. Government relations are critical for success.' :
+                              `${region} business culture emphasizes ${Math.random() > 0.5 ? 'relationship building and trust' : 'efficiency and results'}. ${Math.random() > 0.5 ? 'Formal protocols' : 'Informal networking'} are important for establishing credibility.`}
+                            ${detail >= 6 ? ' Language considerations, local partnerships, and cultural adaptation of marketing materials will be essential for market acceptance.' : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="analysis-section">
+                        <div class="section-title">⚖️ Regulatory Environment</div>
+                        <div class="section-content">
+                            ${region.includes('Europe') || region === 'Germany' || region === 'France' || region === 'United Kingdom' ? 'GDPR compliance is mandatory for data handling. CE marking required for products. Strong consumer protection laws.' :
+                              region === 'China' ? 'Foreign investment requires government approval. Data localization laws apply. Cybersecurity reviews for tech products.' :
+                              region === 'United States' ? 'State-by-state regulations vary. FDA/FTC compliance may be required. Strong IP protection available.' :
+                              'Moderate regulatory environment with standard business registration requirements. IP protection varies by jurisdiction.'}
+                            ${detail >= 7 ? ' Estimated compliance timeline: 3-6 months. Legal costs: $15k-50k depending on complexity.' : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="analysis-section">
+                        <div class="section-title">🏆 Competitive Landscape</div>
+                        <div class="section-content">
+                            Market competition is ${riskLevel === 0 ? 'moderate with clear differentiation opportunities' : riskLevel === 1 ? 'competitive but manageable with strong positioning' : 'intense with established market leaders'}.
+                            ${riskLevel === 0 ? '3-4 main competitors, mostly local players' : riskLevel === 1 ? '5-7 competitors including 2 international brands' : '10+ competitors including global market leaders'}.
+                            ${detail >= 6 ? ` Key success factors include pricing strategy (competitive pricing expected), distribution partnerships, and local customer support capabilities.` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="analysis-section">
+                        <div class="section-title">🎯 Entry Strategy Recommendations</div>
+                        <div class="section-content">
+                            <strong>Recommended approach:</strong> ${riskLevel === 0 ? 'Direct market entry with local partnerships' : riskLevel === 1 ? 'Gradual expansion starting with pilot markets' : 'Joint venture or licensing partnership recommended'}.
+                            <br><br>
+                            <strong>Key steps:</strong>
+                            <br>1. ${riskLevel === 0 ? 'Establish local presence within 6 months' : 'Conduct 3-month market validation study'}
+                            <br>2. ${riskLevel === 0 ? 'Build distribution network' : 'Secure strategic partnerships'}
+                            <br>3. ${riskLevel === 0 ? 'Launch full marketing campaign' : 'Pilot product launch in select regions'}
+                            ${detail >= 8 ? '<br><br><strong>Timeline:</strong> 12-18 months to full market presence. <strong>Investment:</strong> Initial $200k-500k for market entry activities.' : ''}
+                        </div>
+                    </div>
+                    
+                    <p style="margin-top: 20px; font-style: italic; color: #666;">
+                        💡 <strong>Next Step:</strong> Use this analysis to create a detailed business plan or investment proposal. Consider conducting primary market research to validate these insights.
+                    </p>
+                </div>
+            `;
+            
+            resultsDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
