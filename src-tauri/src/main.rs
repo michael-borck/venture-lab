@@ -7,6 +7,9 @@ mod settings;
 mod ai_providers;
 mod secure_storage;
 mod prompts;
+mod usage_tracking;
+mod error_handling;
+mod key_validation;
 
 use settings::{AppSettings, AIProviderConfig};
 use ai_providers::{AIRequest, AIResponse, create_provider, AIProvider};
@@ -430,14 +433,100 @@ async fn generate_ai_response_v2(
     request: AIRequest,
     app_handle: tauri::AppHandle,
 ) -> Result<AIResponse, String> {
+    let start_time = std::time::Instant::now();
+    
     let settings = settings::load_settings(&app_handle)
         .await
         .map_err(|e| format!("Failed to load settings: {}", e))?;
     
     let provider_config = settings.get_active_provider().clone();
-    let provider = create_provider(provider_config);
+    let provider_type = provider_config.provider_type.clone();
+    let model = provider_config.model.clone();
+    let provider = create_provider(provider_config.clone());
     
-    provider.generate(&request).await
+    // Get the tool type from the request context
+    let tool_type = request.context.as_ref()
+        .and_then(|ctx| ctx.get("tool"))
+        .cloned()
+        .unwrap_or_else(|| "unknown".to_string());
+    
+    // Attempt to generate response with retry logic
+    let mut attempt = 0;
+    let max_retries = 3;
+    
+    let response = loop {
+        match provider.generate(&request).await {
+            Ok(resp) => break Ok(resp),
+            Err(e) => {
+                // Check if this is a retryable error
+                if let Ok(api_error) = serde_json::from_str::<error_handling::APIError>(&e) {
+                    if api_error.should_retry() && attempt < max_retries {
+                        attempt += 1;
+                        let delay = api_error.get_retry_delay();
+                        eprintln!("Attempt {} failed with retryable error: {}. Retrying in {:?}...", 
+                            attempt, api_error.to_user_message(), delay);
+                        tokio::time::sleep(delay).await;
+                        continue;
+                    }
+                }
+                break Err(e);
+            }
+        }
+    };
+    
+    let response_time_ms = start_time.elapsed().as_millis() as i64;
+    
+    // Convert retry error to AIResponse format if needed
+    let final_response = match response {
+        Ok(resp) => resp,
+        Err(e) => {
+            // Check if the error is an API error that we can parse
+            if let Ok(api_error) = serde_json::from_str::<error_handling::APIError>(&e) {
+                AIResponse {
+                    content: String::new(),
+                    provider: provider_type.clone(),
+                    model: model.clone(),
+                    success: false,
+                    error: Some(api_error.to_user_message()),
+                    usage: None,
+                }
+            } else {
+                AIResponse {
+                    content: String::new(),
+                    provider: provider_type.clone(),
+                    model: model.clone(),
+                    success: false,
+                    error: Some(e),
+                    usage: None,
+                }
+            }
+        }
+    };
+    
+    // Record usage asynchronously (don't fail the request if recording fails)
+    let usage_record = usage_tracking::UsageRecord {
+        id: None,
+        timestamp: chrono::Utc::now(),
+        provider: provider_type,
+        model: model,
+        tool: tool_type,
+        input_tokens: final_response.usage.as_ref().map(|u| u.prompt_tokens as i32).unwrap_or(0),
+        output_tokens: final_response.usage.as_ref().map(|u| u.completion_tokens as i32).unwrap_or(0),
+        total_tokens: final_response.usage.as_ref().map(|u| u.total_tokens as i32).unwrap_or(0),
+        success: final_response.success,
+        error_message: final_response.error.clone(),
+        response_time_ms,
+    };
+    
+    // Record usage in background
+    let app_handle_clone = app_handle.clone();
+    tokio::spawn(async move {
+        if let Err(e) = usage_tracking::record_usage(&app_handle_clone, usage_record).await {
+            eprintln!("Failed to record usage: {}", e);
+        }
+    });
+    
+    Ok(final_response)
 }
 
 #[command]
@@ -785,11 +874,50 @@ async fn get_prompt(app_handle: tauri::AppHandle, tool_id: String) -> Result<Opt
     Ok(collection.prompts.get(&tool_id).cloned())
 }
 
+// Usage Tracking Commands
+
+#[command]
+async fn get_usage_stats(app_handle: tauri::AppHandle, days: Option<i32>) -> Result<usage_tracking::UsageStats, String> {
+    usage_tracking::get_usage_stats(&app_handle, days).await
+}
+
+#[command]
+async fn get_usage_history(
+    app_handle: tauri::AppHandle, 
+    limit: Option<i32>, 
+    offset: Option<i32>
+) -> Result<Vec<usage_tracking::UsageRecord>, String> {
+    usage_tracking::get_usage_history(&app_handle, limit, offset).await
+}
+
+#[command]
+async fn clear_usage_history(app_handle: tauri::AppHandle) -> Result<(), String> {
+    usage_tracking::clear_usage_history(&app_handle).await
+}
+
+#[command]
+async fn export_usage_data(app_handle: tauri::AppHandle) -> Result<String, String> {
+    usage_tracking::export_usage_data(&app_handle).await
+}
+
+#[command]
+async fn validate_api_key(provider: String, api_key: String) -> Result<key_validation::ValidationResult, String> {
+    Ok(key_validation::validate_api_key(&provider, &api_key))
+}
+
 #[tokio::main]
 async fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
+        .setup(|app| {
+            // Initialize usage tracking database
+            let app_handle = app.handle().clone();
+            if let Err(e) = usage_tracking::init_database(&app_handle) {
+                eprintln!("Failed to initialize usage tracking database: {}", e);
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             save_settings,
             load_settings,
@@ -810,7 +938,12 @@ async fn main() {
             reset_prompt,
             export_prompts,
             import_prompts,
-            get_prompt
+            get_prompt,
+            get_usage_stats,
+            get_usage_history,
+            clear_usage_history,
+            export_usage_data,
+            validate_api_key
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

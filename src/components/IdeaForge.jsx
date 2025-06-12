@@ -105,7 +105,7 @@ Format your response as a numbered list with clear sections for each idea.`;
                 systemMessage: promptData?.system_message || "You are an expert business consultant helping entrepreneurs generate innovative business ideas. Provide practical, actionable suggestions."
             });
 
-            const response = await generateAIResponseV2(aiRequest);
+            const response = await generateAIResponseV2(aiRequest, 'idea_forge');
             
             if (response.success) {
                 const parsedIdeas = parseAIResponse(response.content);

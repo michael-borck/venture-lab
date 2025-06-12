@@ -180,9 +180,17 @@ export async function generateAIResponse(prompt, temperature = 0.7, toolType = '
 }
 
 // AI Generation (v2 - new API)
-export async function generateAIResponseV2(request) {
+export async function generateAIResponseV2(request, toolType = 'unknown') {
     try {
-        const response = await invoke('generate_ai_response_v2', { request });
+        // Add tool type to context for usage tracking
+        const requestWithTool = {
+            ...request,
+            context: {
+                ...request.context,
+                tool: toolType
+            }
+        };
+        const response = await invoke('generate_ai_response_v2', { request: requestWithTool });
         return response;
     } catch (error) {
         console.error('Failed to generate AI response v2:', error);
@@ -218,26 +226,26 @@ export function createProviderConfig(type, baseUrl, model) {
     };
 }
 
-// Default provider configurations
+// Default provider configurations - models will be loaded dynamically from the server
 export const DEFAULT_PROVIDERS = {
     openai: {
         base_url: 'https://api.openai.com/v1',
-        models: ['gpt-4', 'gpt-4-turbo-preview', 'gpt-3.5-turbo'],
+        models: [], // Models will be loaded from the server
         default_model: 'gpt-4'
     },
     anthropic: {
         base_url: 'https://api.anthropic.com',
-        models: ['claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
+        models: [], // Models will be loaded from the server
         default_model: 'claude-3-sonnet-20240229'
     },
     gemini: {
         base_url: 'https://generativelanguage.googleapis.com/v1beta',
-        models: ['gemini-pro', 'gemini-pro-vision'],
+        models: [], // Models will be loaded from the server
         default_model: 'gemini-pro'
     },
     ollama: {
         base_url: 'http://localhost:11434',
-        models: ['llama3.1', 'llama3.1:8b', 'llama3.1:70b', 'llama3.2', 'codellama', 'mistral', 'gemma', 'qwen', 'phi'],
+        models: [], // Models will be loaded from the server
         default_model: 'llama3.1'
     }
 };
@@ -539,5 +547,82 @@ export function usePrompts() {
         importPrompts,
         loading,
         error
+    };
+}
+
+// Usage Tracking Functions
+
+export async function getUsageStats(days = null) {
+    try {
+        const stats = await invoke('get_usage_stats', { days });
+        return { success: true, data: stats };
+    } catch (error) {
+        console.error('Failed to get usage stats:', error);
+        return { success: false, error: error.toString(), data: null };
+    }
+}
+
+export async function getUsageHistory(limit = 100, offset = 0) {
+    try {
+        const history = await invoke('get_usage_history', { limit, offset });
+        return { success: true, data: history };
+    } catch (error) {
+        console.error('Failed to get usage history:', error);
+        return { success: false, error: error.toString(), data: [] };
+    }
+}
+
+export async function clearUsageHistory() {
+    try {
+        await invoke('clear_usage_history');
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to clear usage history:', error);
+        return { success: false, error: error.toString() };
+    }
+}
+
+export async function exportUsageData() {
+    try {
+        const exportData = await invoke('export_usage_data');
+        return { success: true, data: exportData };
+    } catch (error) {
+        console.error('Failed to export usage data:', error);
+        return { success: false, error: error.toString(), data: null };
+    }
+}
+
+// React Hook for Usage Stats
+export function useUsageStats(refreshInterval = null) {
+    const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const loadStats = async (days = null) => {
+        setLoading(true);
+        const result = await getUsageStats(days);
+        if (result.success) {
+            setStats(result.data);
+            setError(null);
+        } else {
+            setError(result.error);
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        loadStats();
+        
+        if (refreshInterval) {
+            const interval = setInterval(() => loadStats(), refreshInterval);
+            return () => clearInterval(interval);
+        }
+    }, [refreshInterval]);
+
+    return {
+        stats,
+        loading,
+        error,
+        refresh: loadStats
     };
 }

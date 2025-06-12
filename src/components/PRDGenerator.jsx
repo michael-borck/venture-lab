@@ -179,7 +179,7 @@ Make the PRD comprehensive but practical, focusing on clarity and implementabili
                 systemMessage: promptData?.system_message || "You are an expert product manager specializing in creating comprehensive Product Requirements Documents. Generate clear, actionable PRDs that development teams can follow to build features successfully."
             });
 
-            const response = await generateAIResponseV2(aiRequest);
+            const response = await generateAIResponseV2(aiRequest, 'prd_generator');
             
             if (response.success) {
                 const parsedPRD = parsePRDResponse(response.content);

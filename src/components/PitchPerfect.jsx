@@ -190,7 +190,7 @@ Provide specific, actionable advice that helps improve presentation effectivenes
                 systemMessage: promptData?.system_message || "You are an expert presentation coach specializing in business pitches. Provide specific, actionable feedback with clear scores and concrete suggestions for improvement."
             });
 
-            const response = await generateAIResponseV2(aiRequest);
+            const response = await generateAIResponseV2(aiRequest, 'pitch_perfect');
             
             if (response.success) {
                 const parsedAnalysis = parseAnalysisResponse(response.content);

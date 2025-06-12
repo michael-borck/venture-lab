@@ -177,7 +177,7 @@ Please provide specific, actionable insights with concrete data points where pos
                 systemMessage: promptData?.system_message || "You are an expert international business consultant specializing in market entry strategies. Provide detailed, practical analysis with specific data points and actionable recommendations."
             });
 
-            const response = await generateAIResponseV2(aiRequest);
+            const response = await generateAIResponseV2(aiRequest, 'global_compass');
             
             if (response.success) {
                 const parsedAnalysis = parseAnalysisResponse(response.content);

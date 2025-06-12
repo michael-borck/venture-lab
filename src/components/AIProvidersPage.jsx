@@ -11,15 +11,11 @@ import {
     deleteApiKey,
     checkApiKeyExists,
     getAllApiKeyStatus,
-    testKeychainAccess,
-    getUsageStats,
-    getUsageHistory,
-    clearUsageHistory,
-    exportUsageData
+    testKeychainAccess
 } from '../lib/tauri_frontend_api';
 import { validateApiKey, getKeyValidationPattern } from '../lib/key_validation_api';
 
-export default function EnhancedSettingsPage({ onClose }) {
+export default function AIProvidersPage({ onClose }) {
     const [settings, setSettings] = useState(null);
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -31,9 +27,6 @@ export default function EnhancedSettingsPage({ onClose }) {
     const [showApiKey, setShowApiKey] = useState({});
     const [keychainTestResult, setKeychainTestResult] = useState(null);
     const [keyValidation, setKeyValidation] = useState({});
-    const [usageStats, setUsageStats] = useState(null);
-    const [usageTimeFilter, setUsageTimeFilter] = useState(30);
-    const [loadingUsage, setLoadingUsage] = useState(false);
     
     useEffect(() => {
         const initializeSettings = async () => {
@@ -48,6 +41,21 @@ export default function EnhancedSettingsPage({ onClose }) {
                 const statusResult = await getAllApiKeyStatus();
                 if (statusResult.success) {
                     setApiKeyStatus(statusResult.status);
+                    
+                    // Only auto-test connection if:
+                    // 1. It's Ollama (doesn't require API key)
+                    // 2. Or the provider has an API key stored
+                    if (settingsResult.success && settingsResult.data.preferred_provider) {
+                        const provider = settingsResult.data.preferred_provider;
+                        const hasApiKey = statusResult.status[provider]?.exists;
+                        
+                        if (provider === 'ollama' || hasApiKey) {
+                            // Small delay to ensure UI is ready
+                            setTimeout(() => {
+                                testConnection(provider, true); // true = isAutoTest
+                            }, 500);
+                        }
+                    }
                 }
                 
                 // Test keychain access
@@ -59,19 +67,17 @@ export default function EnhancedSettingsPage({ onClose }) {
             } finally {
                 setLoading(false);
             }
-            
-            // Load usage statistics separately (non-blocking)
-            try {
-                loadUsageStats();
-            } catch (error) {
-                console.error('Failed to load usage stats:', error);
-            }
         };
         
         initializeSettings();
     }, []);
     
-    const testConnection = async (providerType) => {
+    const testConnection = async (providerType, isAutoTest = false) => {
+        // Don't show errors for auto-tests if provider requires API key and none is set
+        if (isAutoTest && providerType !== 'ollama' && !apiKeyStatus[providerType]?.exists) {
+            return;
+        }
+        
         setTesting(prev => ({ ...prev, [providerType]: true }));
         
         try {
@@ -96,10 +102,14 @@ export default function EnhancedSettingsPage({ onClose }) {
             
             // Use testCustomProviderConnection
             const result = await testCustomProviderConnection(currentConfig);
-            setConnectionStatus(prev => ({ 
-                ...prev, 
-                [providerType]: result 
-            }));
+            
+            // Only update connection status if this is a manual test or if successful
+            if (!isAutoTest || result.success) {
+                setConnectionStatus(prev => ({ 
+                    ...prev, 
+                    [providerType]: result 
+                }));
+            }
             
             if (result.success && result.models) {
                 setAvailableModels(prev => ({
@@ -108,13 +118,16 @@ export default function EnhancedSettingsPage({ onClose }) {
                 }));
             }
         } catch (error) {
-            setConnectionStatus(prev => ({ 
-                ...prev, 
-                [providerType]: { 
-                    success: false, 
-                    error: error.toString() 
-                } 
-            }));
+            // Only show errors for manual tests
+            if (!isAutoTest) {
+                setConnectionStatus(prev => ({ 
+                    ...prev, 
+                    [providerType]: { 
+                        success: false, 
+                        error: error.toString() 
+                    } 
+                }));
+            }
         } finally {
             setTesting(prev => ({ ...prev, [providerType]: false }));
         }
@@ -170,58 +183,6 @@ export default function EnhancedSettingsPage({ onClose }) {
         }
     };
     
-    const loadUsageStats = async (days = usageTimeFilter) => {
-        setLoadingUsage(true);
-        try {
-            const result = await getUsageStats(days === 0 ? null : days);
-            if (result.success && result.data) {
-                setUsageStats(result.data);
-            } else {
-                console.log('No usage stats available or failed to load');
-                setUsageStats(null);
-            }
-        } catch (error) {
-            console.error('Failed to load usage stats:', error);
-            setUsageStats(null);
-        } finally {
-            setLoadingUsage(false);
-        }
-    };
-    
-    const handleExportUsage = async () => {
-        try {
-            const result = await exportUsageData();
-            if (result.success) {
-                // Create a blob and download
-                const blob = new Blob([result.data], { type: 'application/json' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `usage-data-${new Date().toISOString().split('T')[0]}.json`;
-                a.click();
-                window.URL.revokeObjectURL(url);
-            }
-        } catch (error) {
-            console.error('Failed to export usage data:', error);
-            alert('Failed to export usage data: ' + error.toString());
-        }
-    };
-    
-    const handleClearUsage = async () => {
-        if (window.confirm('Are you sure you want to clear all usage history? This action cannot be undone.')) {
-            try {
-                const result = await clearUsageHistory();
-                if (result.success) {
-                    setUsageStats(null);
-                    loadUsageStats();
-                }
-            } catch (error) {
-                console.error('Failed to clear usage history:', error);
-                alert('Failed to clear usage history: ' + error.toString());
-            }
-        }
-    };
-    
     if (loading || !settings) {
         return (
             <div style={{
@@ -242,7 +203,6 @@ export default function EnhancedSettingsPage({ onClose }) {
             </div>
         );
     }
-
 
     return (
         <div style={{
@@ -276,7 +236,7 @@ export default function EnhancedSettingsPage({ onClose }) {
                     color: 'white',
                     borderRadius: '20px 20px 0 0'
                 }}>
-                    <h2 style={{ margin: 0, fontSize: '1.8em' }}>🛠️ VentureLab Settings</h2>
+                    <h2 style={{ margin: 0, fontSize: '1.8em' }}>🤖 AI Providers</h2>
                     <button 
                         onClick={onClose}
                         style={{
@@ -320,10 +280,16 @@ export default function EnhancedSettingsPage({ onClose }) {
                         </label>
                         <select
                             value={settings?.preferred_provider || 'ollama'}
-                            onChange={(e) => setSettings(prev => ({
-                                ...prev,
-                                preferred_provider: e.target.value
-                            }))}
+                            onChange={(e) => {
+                                const newProvider = e.target.value;
+                                setSettings(prev => ({
+                                    ...prev,
+                                    preferred_provider: newProvider
+                                }));
+                                // Clear connection status when switching providers
+                                setConnectionStatus({});
+                                setAvailableModels({});
+                            }}
                             style={{
                                 width: '100%',
                                 padding: '15px',
@@ -374,7 +340,7 @@ export default function EnhancedSettingsPage({ onClose }) {
                             );
                         })()}
                         
-                        {/* Connection Status */}
+                        {/* Connection Status - only show if we have a test result */}
                         {connectionStatus[settings?.preferred_provider] && (
                             <div style={{
                                 marginTop: '10px',
@@ -619,16 +585,27 @@ export default function EnhancedSettingsPage({ onClose }) {
                                         const currentModel = settings[settings.preferred_provider]?.model;
                                         const models = availableModels[settings.preferred_provider] || [];
                                         
-                                        // If current model is not in the list, add it as the first option
-                                        if (currentModel && !models.includes(currentModel)) {
-                                            return [
-                                                <option key={currentModel} value={currentModel}>
-                                                    {currentModel} (current)
-                                                </option>,
-                                                ...models.map(model => (
+                                        // Always show the current model if it exists
+                                        if (currentModel) {
+                                            if (!models.includes(currentModel)) {
+                                                // Current model is not in the available list
+                                                return [
+                                                    <option key={currentModel} value={currentModel}>
+                                                        {currentModel} (saved)
+                                                    </option>,
+                                                    ...models.map(model => (
+                                                        <option key={model} value={model}>{model}</option>
+                                                    ))
+                                                ];
+                                            } else {
+                                                // Current model is in the list, show it normally
+                                                return models.map(model => (
                                                     <option key={model} value={model}>{model}</option>
-                                                ))
-                                            ];
+                                                ));
+                                            }
+                                        } else if (models.length === 0) {
+                                            // No current model and no available models
+                                            return <option value="">No models available - Test connection first</option>;
                                         }
                                         
                                         return models.map(model => (
@@ -785,16 +762,27 @@ export default function EnhancedSettingsPage({ onClose }) {
                                         const currentModel = settings.ollama?.model;
                                         const models = availableModels.ollama || [];
                                         
-                                        // If current model is not in the list, add it as the first option
-                                        if (currentModel && !models.includes(currentModel)) {
-                                            return [
-                                                <option key={currentModel} value={currentModel}>
-                                                    {currentModel} (current)
-                                                </option>,
-                                                ...models.map(model => (
+                                        // Always show the current model if it exists
+                                        if (currentModel) {
+                                            if (!models.includes(currentModel)) {
+                                                // Current model is not in the available list
+                                                return [
+                                                    <option key={currentModel} value={currentModel}>
+                                                        {currentModel} (saved)
+                                                    </option>,
+                                                    ...models.map(model => (
+                                                        <option key={model} value={model}>{model}</option>
+                                                    ))
+                                                ];
+                                            } else {
+                                                // Current model is in the list, show it normally
+                                                return models.map(model => (
                                                     <option key={model} value={model}>{model}</option>
-                                                ))
-                                            ];
+                                                ));
+                                            }
+                                        } else if (models.length === 0) {
+                                            // No current model and no available models
+                                            return <option value="">No models available - Test connection first</option>;
                                         }
                                         
                                         return models.map(model => (
@@ -845,232 +833,6 @@ export default function EnhancedSettingsPage({ onClose }) {
                             </div>
                         </div>
                     )}
-
-                    {/* Usage Statistics Section */}
-                    <div style={{ marginBottom: '30px' }}>
-                        <h3 style={{ color: '#333', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            📊 Usage Statistics
-                            <button
-                                onClick={() => loadUsageStats(usageTimeFilter)}
-                                disabled={loadingUsage}
-                                style={{
-                                    padding: '4px 8px',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    backgroundColor: '#f3f4f6',
-                                    color: '#4b5563',
-                                    fontSize: '0.8em',
-                                    cursor: loadingUsage ? 'not-allowed' : 'pointer',
-                                    opacity: loadingUsage ? 0.6 : 1
-                                }}
-                                title="Refresh statistics"
-                            >
-                                {loadingUsage ? '🔄' : '🔄'}
-                            </button>
-                        </h3>
-                        
-                        {/* Time Filter */}
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#333' }}>
-                                📅 Time Period:
-                            </label>
-                            <select
-                                value={usageTimeFilter}
-                                onChange={(e) => {
-                                    const newFilter = parseInt(e.target.value);
-                                    setUsageTimeFilter(newFilter);
-                                    loadUsageStats(newFilter);
-                                }}
-                                style={{
-                                    padding: '8px 12px',
-                                    border: '2px solid #e1e5e9',
-                                    borderRadius: '8px',
-                                    fontSize: '14px',
-                                    background: 'white'
-                                }}
-                            >
-                                <option value={7}>Last 7 days</option>
-                                <option value={30}>Last 30 days</option>
-                                <option value={90}>Last 90 days</option>
-                                <option value={0}>All time</option>
-                            </select>
-                        </div>
-
-                        {/* Usage Statistics Display */}
-                        {loadingUsage ? (
-                            <div style={{
-                                padding: '20px',
-                                textAlign: 'center',
-                                color: '#666',
-                                fontStyle: 'italic'
-                            }}>
-                                Loading usage statistics...
-                            </div>
-                        ) : usageStats ? (
-                            <div>
-                                {/* Overview Cards */}
-                                <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                                    gap: '15px',
-                                    marginBottom: '20px'
-                                }}>
-                                    <div style={{
-                                        padding: '15px',
-                                        backgroundColor: '#f0f9ff',
-                                        border: '2px solid #0ea5e9',
-                                        borderRadius: '8px',
-                                        textAlign: 'center'
-                                    }}>
-                                        <div style={{ fontSize: '1.5em', fontWeight: '700', color: '#0ea5e9' }}>
-                                            {usageStats.total_requests || 0}
-                                        </div>
-                                        <div style={{ fontSize: '0.9em', color: '#0c4a6e' }}>Total API Calls</div>
-                                    </div>
-                                    
-                                    <div style={{
-                                        padding: '15px',
-                                        backgroundColor: '#f0fdf4',
-                                        border: '2px solid #10b981',
-                                        borderRadius: '8px',
-                                        textAlign: 'center'
-                                    }}>
-                                        <div style={{ fontSize: '1.5em', fontWeight: '700', color: '#10b981' }}>
-                                            {(usageStats.total_tokens || 0).toLocaleString()}
-                                        </div>
-                                        <div style={{ fontSize: '0.9em', color: '#166534' }}>Total Tokens</div>
-                                    </div>
-                                    
-                                    <div style={{
-                                        padding: '15px',
-                                        backgroundColor: '#fefce8',
-                                        border: '2px solid #f59e0b',
-                                        borderRadius: '8px',
-                                        textAlign: 'center'
-                                    }}>
-                                        <div style={{ fontSize: '1.5em', fontWeight: '700', color: '#f59e0b' }}>
-                                            {(usageStats.input_tokens || 0).toLocaleString()}
-                                        </div>
-                                        <div style={{ fontSize: '0.9em', color: '#92400e' }}>Input Tokens</div>
-                                    </div>
-                                    
-                                    <div style={{
-                                        padding: '15px',
-                                        backgroundColor: '#fdf2f8',
-                                        border: '2px solid #ec4899',
-                                        borderRadius: '8px',
-                                        textAlign: 'center'
-                                    }}>
-                                        <div style={{ fontSize: '1.5em', fontWeight: '700', color: '#ec4899' }}>
-                                            {(usageStats.output_tokens || 0).toLocaleString()}
-                                        </div>
-                                        <div style={{ fontSize: '0.9em', color: '#9f1239' }}>Output Tokens</div>
-                                    </div>
-                                </div>
-
-                                {/* Provider Breakdown */}
-                                {usageStats.by_provider && Object.keys(usageStats.by_provider).length > 0 && (
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <h4 style={{ color: '#333', marginBottom: '10px' }}>🤖 Usage by Provider</h4>
-                                        <div style={{
-                                            display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                                            gap: '10px'
-                                        }}>
-                                            {Object.entries(usageStats.by_provider).map(([provider, stats]) => (
-                                                <div key={provider} style={{
-                                                    padding: '10px',
-                                                    backgroundColor: '#f8fafc',
-                                                    border: '1px solid #e1e5e9',
-                                                    borderRadius: '6px'
-                                                }}>
-                                                    <div style={{ fontWeight: '600', color: '#333', textTransform: 'capitalize' }}>
-                                                        {provider}
-                                                    </div>
-                                                    <div style={{ fontSize: '0.8em', color: '#666' }}>
-                                                        {(stats?.requests || 0)} calls, {((stats?.tokens || 0)).toLocaleString()} tokens
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Tool Breakdown */}
-                                {usageStats.by_tool && Object.keys(usageStats.by_tool).length > 0 && (
-                                    <div style={{ marginBottom: '20px' }}>
-                                        <h4 style={{ color: '#333', marginBottom: '10px' }}>🛠️ Usage by Tool</h4>
-                                        <div style={{
-                                            display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                                            gap: '10px'
-                                        }}>
-                                            {Object.entries(usageStats.by_tool).map(([tool, stats]) => (
-                                                <div key={tool} style={{
-                                                    padding: '10px',
-                                                    backgroundColor: '#f8fafc',
-                                                    border: '1px solid #e1e5e9',
-                                                    borderRadius: '6px'
-                                                }}>
-                                                    <div style={{ fontWeight: '600', color: '#333' }}>
-                                                        {tool.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                                                    </div>
-                                                    <div style={{ fontSize: '0.8em', color: '#666' }}>
-                                                        {(stats?.requests || 0)} calls, {((stats?.tokens || 0)).toLocaleString()} tokens
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Action Buttons */}
-                                <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
-                                    <button
-                                        onClick={handleExportUsage}
-                                        style={{
-                                            padding: '8px 16px',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            backgroundColor: '#10b981',
-                                            color: 'white',
-                                            fontSize: '0.9em',
-                                            fontWeight: '600',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        📥 Export Data
-                                    </button>
-                                    <button
-                                        onClick={handleClearUsage}
-                                        style={{
-                                            padding: '8px 16px',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            backgroundColor: '#ef4444',
-                                            color: 'white',
-                                            fontSize: '0.9em',
-                                            fontWeight: '600',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        🗑️ Clear History
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div style={{
-                                padding: '20px',
-                                textAlign: 'center',
-                                color: '#666',
-                                backgroundColor: '#f8fafc',
-                                borderRadius: '8px',
-                                border: '1px solid #e1e5e9'
-                            }}>
-                                📊 No usage data available yet. Start using the AI tools to see statistics here!
-                            </div>
-                        )}
-                    </div>
                 </div>
 
                 <div style={{
@@ -1100,29 +862,29 @@ export default function EnhancedSettingsPage({ onClose }) {
                         onClick={async () => {
                             setSaving(true);
                             try {
-                                console.log('Saving settings:', settings); // Debug log
+                                console.log('Saving settings:', settings);
                                 
                                 // Save any pending API keys first
                                 for (const [provider, key] of Object.entries(tempApiKeys)) {
                                     if (key) {
-                                        console.log('Storing API key for provider:', provider); // Debug log
+                                        console.log('Storing API key for provider:', provider);
                                         await storeApiKey(provider, key);
                                     }
                                 }
                                 
-                                console.log('Final settings to save:', settings); // Debug log
+                                console.log('Final settings to save:', settings);
                                 const result = await saveSettings(settings);
-                                console.log('Save result:', result); // Debug log
+                                console.log('Save result:', result);
                                 
                                 if (result.success) {
-                                    console.log('Settings saved successfully'); // Debug log
+                                    console.log('Settings saved successfully');
                                     onClose();
                                 } else {
-                                    console.error('Failed to save settings:', result.error); // Debug log
+                                    console.error('Failed to save settings:', result.error);
                                     alert('Failed to save settings: ' + result.error);
                                 }
                             } catch (error) {
-                                console.error('Error saving settings:', error); // Debug log
+                                console.error('Error saving settings:', error);
                                 alert('Error saving settings: ' + error.toString());
                             } finally {
                                 setSaving(false);

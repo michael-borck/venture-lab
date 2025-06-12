@@ -1,6 +1,7 @@
 use keyring::Entry;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use crate::key_validation;
 
 const SERVICE_NAME: &str = "entrepreneurship-ai-tools";
 
@@ -9,6 +10,7 @@ pub struct ApiKeyInfo {
     pub exists: bool,
     pub provider: String,
     pub created_at: Option<String>,
+    pub masked_key: Option<String>,
 }
 
 // Get the keyring entry for a specific provider
@@ -20,12 +22,17 @@ fn get_keyring_entry(provider: &str) -> Result<Entry, String> {
 
 // Store API key securely in OS keychain
 pub fn store_api_key(provider: &str, api_key: &str) -> Result<(), String> {
-    if api_key.trim().is_empty() {
-        return Err("API key cannot be empty".to_string());
+    // Validate the API key format before storing
+    let validation_result = key_validation::validate_api_key(provider, api_key);
+    
+    if !validation_result.is_valid {
+        return Err(validation_result.error_message.unwrap_or_else(|| 
+            format!("Invalid API key format for provider: {}", provider)
+        ));
     }
 
     let entry = get_keyring_entry(provider)?;
-    entry.set_password(api_key)
+    entry.set_password(api_key.trim())
         .map_err(|e| format!("Failed to store API key: {}", e))?;
     
     Ok(())
@@ -86,10 +93,21 @@ pub fn get_all_api_key_status() -> Result<HashMap<String, ApiKeyInfo>, String> {
     
     for provider in providers {
         let exists = check_api_key_exists(provider).unwrap_or(false);
+        let masked_key = if exists {
+            if let Ok(Some(key)) = retrieve_api_key(provider) {
+                Some(key_validation::mask_api_key(&key))
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        
         let info = ApiKeyInfo {
             exists,
             provider: provider.to_string(),
             created_at: None, // Could be enhanced to track creation time
+            masked_key,
         };
         status_map.insert(provider.to_string(), info);
     }
@@ -145,20 +163,34 @@ pub fn migrate_api_keys_from_settings(old_settings: &serde_json::Value) -> Resul
 
 // Test keychain functionality
 pub fn test_keychain_access() -> Result<(), String> {
-    let test_key = "test_key";
-    let test_value = "test_value";
+    // Use a temporary test entry that bypasses validation
+    let test_provider = "keychain_test";
+    let test_value = "sk-test-1234567890abcdefghijklmnopqrstuvwxyz"; // Valid format for testing
+    
+    // Get keyring entry directly to bypass validation
+    let entry = get_keyring_entry(test_provider)?;
     
     // Try to store a test value
-    store_api_key(test_key, test_value)?;
+    entry.set_password(test_value)
+        .map_err(|e| format!("Failed to store test key: {}", e))?;
     
     // Try to retrieve it
-    let retrieved = retrieve_api_key(test_key)?;
-    if retrieved.as_deref() != Some(test_value) {
-        return Err("Keychain test failed: retrieved value doesn't match".to_string());
+    match entry.get_password() {
+        Ok(password) => {
+            if password != test_value {
+                // Clean up before returning error
+                let _ = entry.delete_password();
+                return Err("Keychain test failed: retrieved value doesn't match".to_string());
+            }
+        }
+        Err(e) => {
+            return Err(format!("Failed to retrieve test key: {}", e));
+        }
     }
     
     // Clean up test entry
-    delete_api_key(test_key)?;
+    entry.delete_password()
+        .map_err(|e| format!("Failed to delete test key: {}", e))?;
     
     Ok(())
 }

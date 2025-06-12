@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use crate::settings::AIProviderConfig;
 use crate::secure_storage;
+use crate::error_handling::{APIError, parse_provider_error};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AIRequest {
@@ -114,16 +115,29 @@ impl AIProvider for OpenAIProvider {
             .json(&payload)
             .send()
             .await
-            .map_err(|e| format!("Request failed: {}", e))?;
+            .map_err(|e| {
+                // Network error - return as APIError for retry
+                let api_error = APIError::network_error("openai", &e.to_string());
+                serde_json::to_string(&api_error).unwrap_or_else(|_| format!("Network error: {}", e))
+            })?;
 
-        if !response.status().is_success() {
+        let status = response.status();
+        if !status.is_success() {
             let error_text = response.text().await.unwrap_or_default();
+            let api_error = parse_provider_error("openai", status.as_u16(), &error_text);
+            
+            // If it's a retryable error, return it as an error for retry logic
+            if api_error.should_retry() {
+                return Err(serde_json::to_string(&api_error).unwrap_or_else(|_| error_text));
+            }
+            
+            // Otherwise, return as a failed response
             return Ok(AIResponse {
                 content: String::new(),
                 provider: "openai".to_string(),
                 model: self.config.model.clone(),
                 success: false,
-                error: Some(format!("API error: {}", error_text)),
+                error: Some(api_error.to_user_message()),
                 usage: None,
             });
         }
@@ -285,16 +299,29 @@ impl AIProvider for AnthropicProvider {
             .json(&payload)
             .send()
             .await
-            .map_err(|e| format!("Request failed: {}", e))?;
+            .map_err(|e| {
+                // Network error - return as APIError for retry
+                let api_error = APIError::network_error("anthropic", &e.to_string());
+                serde_json::to_string(&api_error).unwrap_or_else(|_| format!("Network error: {}", e))
+            })?;
 
-        if !response.status().is_success() {
+        let status = response.status();
+        if !status.is_success() {
             let error_text = response.text().await.unwrap_or_default();
+            let api_error = parse_provider_error("anthropic", status.as_u16(), &error_text);
+            
+            // If it's a retryable error, return it as an error for retry logic
+            if api_error.should_retry() {
+                return Err(serde_json::to_string(&api_error).unwrap_or_else(|_| error_text));
+            }
+            
+            // Otherwise, return as a failed response
             return Ok(AIResponse {
                 content: String::new(),
                 provider: "anthropic".to_string(),
                 model: self.config.model.clone(),
                 success: false,
-                error: Some(format!("API error: {}", error_text)),
+                error: Some(api_error.to_user_message()),
                 usage: None,
             });
         }
@@ -459,16 +486,29 @@ impl AIProvider for GeminiProvider {
             .json(&payload)
             .send()
             .await
-            .map_err(|e| format!("Request failed: {}", e))?;
+            .map_err(|e| {
+                // Network error - return as APIError for retry
+                let api_error = APIError::network_error("gemini", &e.to_string());
+                serde_json::to_string(&api_error).unwrap_or_else(|_| format!("Network error: {}", e))
+            })?;
 
-        if !response.status().is_success() {
+        let status = response.status();
+        if !status.is_success() {
             let error_text = response.text().await.unwrap_or_default();
+            let api_error = parse_provider_error("gemini", status.as_u16(), &error_text);
+            
+            // If it's a retryable error, return it as an error for retry logic
+            if api_error.should_retry() {
+                return Err(serde_json::to_string(&api_error).unwrap_or_else(|_| error_text));
+            }
+            
+            // Otherwise, return as a failed response
             return Ok(AIResponse {
                 content: String::new(),
                 provider: "gemini".to_string(),
                 model: self.config.model.clone(),
                 success: false,
-                error: Some(format!("API error: {}", error_text)),
+                error: Some(api_error.to_user_message()),
                 usage: None,
             });
         }
@@ -619,15 +659,29 @@ impl AIProvider for OllamaProvider {
         let response = request_builder
             .send()
             .await
-            .map_err(|e| format!("Request failed: {}", e))?;
+            .map_err(|e| {
+                // Network error - return as APIError for retry
+                let api_error = APIError::network_error("ollama", &e.to_string());
+                serde_json::to_string(&api_error).unwrap_or_else(|_| format!("Network error: {}", e))
+            })?;
 
-        if !response.status().is_success() {
+        let status = response.status();
+        if !status.is_success() {
+            let error_text = response.text().await.unwrap_or_default();
+            let api_error = parse_provider_error("ollama", status.as_u16(), &error_text);
+            
+            // Ollama server errors are often retryable (e.g., model loading)
+            if api_error.should_retry() || status.as_u16() >= 500 {
+                return Err(serde_json::to_string(&api_error).unwrap_or_else(|_| error_text));
+            }
+            
+            // Otherwise, return as a failed response
             return Ok(AIResponse {
                 content: String::new(),
                 provider: "ollama".to_string(),
                 model: self.config.model.clone(),
                 success: false,
-                error: Some("Ollama server not available or model not loaded".to_string()),
+                error: Some(api_error.to_user_message()),
                 usage: None,
             });
         }
