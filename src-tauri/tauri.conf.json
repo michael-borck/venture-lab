@@ -1,7 +1,7 @@
 {
-  "productName": "Entrepreneurship AI Tools",
+  "productName": "VentureLab",
   "version": "0.1.0",
-  "identifier": "com.entrepreneurship.ai-tools",
+  "identifier": "com.venturelab.app",
   "build": {
     "beforeBuildCommand": "npm run build",
     "beforeDevCommand": "npm run dev",
@@ -11,7 +11,7 @@
   "app": {
     "windows": [
       {
-        "title": "Entrepreneurship AI Tools",
+        "title": "VentureLab - Where AI meets entrepreneurship",
         "width": 1200,
         "height": 800,
         "minWidth": 800,
