@@ -77,7 +77,7 @@ async fn save_settings(settings: AppSettings, app_handle: tauri::AppHandle) -> R
 
 #[command]
 async fn load_settings(app_handle: tauri::AppHandle) -> Result<AppSettings, String> {
-    let mut settings = settings::load_settings(&app_handle)
+    let settings = settings::load_settings(&app_handle)
         .await
         .map_err(|e| format!("Failed to load settings: {}", e))?;
 
@@ -480,14 +480,21 @@ async fn generate_openai_response(
     request: GenerateRequest,
     provider: &AIProviderConfig,
 ) -> Result<GenerateResponse, String> {
-    if provider.api_key.is_none() {
-        return Ok(GenerateResponse {
+    let api_key = match secure_storage::retrieve_api_key(&provider.provider_type) {
+        Ok(Some(key)) => key,
+        Ok(None) => return Ok(GenerateResponse {
             content: String::new(),
             provider: "openai".to_string(),
             success: false,
             error: Some("OpenAI API key not configured".to_string()),
-        });
-    }
+        }),
+        Err(e) => return Ok(GenerateResponse {
+            content: String::new(),
+            provider: "openai".to_string(),
+            success: false,
+            error: Some(format!("Failed to retrieve API key: {}", e)),
+        }),
+    };
     
     let client = reqwest::Client::new();
     let openai_request = OpenAIRequest {
@@ -503,7 +510,7 @@ async fn generate_openai_response(
     let url = format!("{}/chat/completions", provider.base_url);
     let response = client
         .post(&url)
-        .header("Authorization", format!("Bearer {}", provider.api_key.as_ref().unwrap()))
+        .header("Authorization", format!("Bearer {}", api_key))
         .header("Content-Type", "application/json")
         .json(&openai_request)
         .send()
