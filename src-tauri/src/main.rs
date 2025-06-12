@@ -587,14 +587,21 @@ async fn generate_anthropic_response(
     request: GenerateRequest,
     provider: &AIProviderConfig,
 ) -> Result<GenerateResponse, String> {
-    if provider.api_key.is_none() {
-        return Ok(GenerateResponse {
+    let api_key = match secure_storage::retrieve_api_key(&provider.provider_type) {
+        Ok(Some(key)) => key,
+        Ok(None) => return Ok(GenerateResponse {
             content: String::new(),
             provider: "anthropic".to_string(),
             success: false,
             error: Some("Anthropic API key not configured".to_string()),
-        });
-    }
+        }),
+        Err(e) => return Ok(GenerateResponse {
+            content: String::new(),
+            provider: "anthropic".to_string(),
+            success: false,
+            error: Some(format!("Failed to retrieve API key: {}", e)),
+        }),
+    };
 
     let client = reqwest::Client::new();
     let anthropic_request = serde_json::json!({
@@ -606,7 +613,7 @@ async fn generate_anthropic_response(
     let url = format!("{}/v1/messages", provider.base_url);
     let response = client
         .post(&url)
-        .header("x-api-key", provider.api_key.as_ref().unwrap())
+        .header("x-api-key", &api_key)
         .header("anthropic-version", "2023-06-01")
         .header("Content-Type", "application/json")
         .json(&anthropic_request)
@@ -646,14 +653,21 @@ async fn generate_gemini_response(
     request: GenerateRequest,
     provider: &AIProviderConfig,
 ) -> Result<GenerateResponse, String> {
-    if provider.api_key.is_none() {
-        return Ok(GenerateResponse {
+    let api_key = match secure_storage::retrieve_api_key(&provider.provider_type) {
+        Ok(Some(key)) => key,
+        Ok(None) => return Ok(GenerateResponse {
             content: String::new(),
             provider: "gemini".to_string(),
             success: false,
             error: Some("Gemini API key not configured".to_string()),
-        });
-    }
+        }),
+        Err(e) => return Ok(GenerateResponse {
+            content: String::new(),
+            provider: "gemini".to_string(),
+            success: false,
+            error: Some(format!("Failed to retrieve API key: {}", e)),
+        }),
+    };
 
     let client = reqwest::Client::new();
     let gemini_request = serde_json::json!({
@@ -669,7 +683,7 @@ async fn generate_gemini_response(
     let url = format!("{}/models/{}:generateContent?key={}", 
         provider.base_url, 
         provider.model, 
-        provider.api_key.as_ref().unwrap()
+        &api_key
     );
     
     let response = client
