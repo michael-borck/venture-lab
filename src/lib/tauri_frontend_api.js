@@ -409,3 +409,135 @@ export function useSettings() {
         error
     };
 }
+
+// Prompt Management Functions
+
+export async function loadPrompts() {
+    try {
+        const collection = await invoke('load_prompts');
+        return { success: true, data: collection };
+    } catch (error) {
+        console.error('Failed to load prompts:', error);
+        return { success: false, error: error.toString(), data: null };
+    }
+}
+
+export async function savePrompt(toolId, prompt) {
+    try {
+        await invoke('save_prompt', { toolId, prompt });
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to save prompt:', error);
+        return { success: false, error: error.toString() };
+    }
+}
+
+export async function resetPrompt(toolId) {
+    try {
+        await invoke('reset_prompt', { toolId });
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to reset prompt:', error);
+        return { success: false, error: error.toString() };
+    }
+}
+
+export async function exportPrompts() {
+    try {
+        const exportData = await invoke('export_prompts');
+        return { success: true, data: exportData };
+    } catch (error) {
+        console.error('Failed to export prompts:', error);
+        return { success: false, error: error.toString(), data: null };
+    }
+}
+
+export async function importPrompts(importData) {
+    try {
+        await invoke('import_prompts', { importData });
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to import prompts:', error);
+        return { success: false, error: error.toString() };
+    }
+}
+
+export async function getPrompt(toolId) {
+    try {
+        const prompt = await invoke('get_prompt', { toolId });
+        return { success: true, data: prompt };
+    } catch (error) {
+        console.error('Failed to get prompt:', error);
+        return { success: false, error: error.toString(), data: null };
+    }
+}
+
+// Helper function to replace variables in prompt template
+export function replacePromptVariables(template, variables) {
+    let result = template;
+    
+    Object.entries(variables).forEach(([key, value]) => {
+        const placeholder = `{${key}}`;
+        result = result.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), value || '');
+    });
+    
+    return result;
+}
+
+// React Hook for Prompt Management
+export function usePrompts() {
+    const [prompts, setPrompts] = useState({});
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        loadPrompts().then(result => {
+            if (result.success && result.data) {
+                setPrompts(result.data.prompts);
+            } else {
+                setError(result.error);
+            }
+            setLoading(false);
+        });
+    }, []);
+
+    const savePromptAndUpdate = async (toolId, prompt) => {
+        const result = await savePrompt(toolId, prompt);
+        if (result.success) {
+            // Reload prompts to get updated data
+            const loadResult = await loadPrompts();
+            if (loadResult.success && loadResult.data) {
+                setPrompts(loadResult.data.prompts);
+            }
+            setError(null);
+        } else {
+            setError(result.error);
+        }
+        return result;
+    };
+
+    const resetPromptAndUpdate = async (toolId) => {
+        const result = await resetPrompt(toolId);
+        if (result.success) {
+            // Reload prompts to get updated data
+            const loadResult = await loadPrompts();
+            if (loadResult.success && loadResult.data) {
+                setPrompts(loadResult.data.prompts);
+            }
+            setError(null);
+        } else {
+            setError(result.error);
+        }
+        return result;
+    };
+
+    return {
+        prompts,
+        savePrompt: savePromptAndUpdate,
+        resetPrompt: resetPromptAndUpdate,
+        exportPrompts,
+        importPrompts,
+        loading,
+        error
+    };
+}

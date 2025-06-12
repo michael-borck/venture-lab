@@ -6,10 +6,12 @@ use tokio;
 mod settings;
 mod ai_providers;
 mod secure_storage;
+mod prompts;
 
 use settings::{AppSettings, AIProviderConfig};
 use ai_providers::{AIRequest, AIResponse, create_provider, AIProvider};
 use secure_storage::{ApiKeyInfo};
+use prompts::{PromptCollection, ToolPrompt};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GenerateRequest {
@@ -750,6 +752,39 @@ async fn save_file_to_downloads(
     Ok(file_path.to_string_lossy().to_string())
 }
 
+// Prompt Management Commands
+
+#[command]
+async fn load_prompts(app_handle: tauri::AppHandle) -> Result<PromptCollection, String> {
+    prompts::load_prompts(&app_handle).await
+}
+
+#[command]
+async fn save_prompt(app_handle: tauri::AppHandle, tool_id: String, prompt: ToolPrompt) -> Result<(), String> {
+    prompts::save_prompt(&app_handle, &tool_id, prompt).await
+}
+
+#[command]
+async fn reset_prompt(app_handle: tauri::AppHandle, tool_id: String) -> Result<(), String> {
+    prompts::reset_prompt(&app_handle, &tool_id).await
+}
+
+#[command]
+async fn export_prompts(app_handle: tauri::AppHandle) -> Result<String, String> {
+    prompts::export_prompts(&app_handle).await
+}
+
+#[command]
+async fn import_prompts(app_handle: tauri::AppHandle, import_data: String) -> Result<(), String> {
+    prompts::import_prompts(&app_handle, &import_data).await
+}
+
+#[command]
+async fn get_prompt(app_handle: tauri::AppHandle, tool_id: String) -> Result<Option<ToolPrompt>, String> {
+    let collection = prompts::load_prompts(&app_handle).await?;
+    Ok(collection.prompts.get(&tool_id).cloned())
+}
+
 #[tokio::main]
 async fn main() {
     tauri::Builder::default()
@@ -769,7 +804,13 @@ async fn main() {
             check_api_key_exists,
             get_all_api_key_status,
             test_keychain_access,
-            save_file_to_downloads
+            save_file_to_downloads,
+            load_prompts,
+            save_prompt,
+            reset_prompt,
+            export_prompts,
+            import_prompts,
+            get_prompt
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

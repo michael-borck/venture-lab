@@ -64,16 +64,6 @@ impl AppSettings {
         }
     }
 
-    pub fn get_provider_mut(&mut self, provider_type: &str) -> Option<&mut AIProviderConfig> {
-        match provider_type {
-            "openai" => Some(&mut self.openai),
-            "anthropic" => Some(&mut self.anthropic),
-            "gemini" => Some(&mut self.gemini),
-            "ollama" => Some(&mut self.ollama),
-            _ => None,
-        }
-    }
-
     pub fn get_provider(&self, provider_type: &str) -> Option<&AIProviderConfig> {
         match provider_type {
             "openai" => Some(&self.openai),

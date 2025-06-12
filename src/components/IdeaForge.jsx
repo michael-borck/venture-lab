@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { generateAIResponseV2, createAIRequest, saveFileToDownloads } from '../lib/tauri_frontend_api';
+import React, { useState, useEffect } from 'react';
+import { generateAIResponseV2, createAIRequest, saveFileToDownloads, getPrompt, replacePromptVariables } from '../lib/tauri_frontend_api';
 
 export default function IdeaForge({ onClose }) {
     const [keywords, setKeywords] = useState('');
@@ -10,12 +10,43 @@ export default function IdeaForge({ onClose }) {
     const [ideas, setIdeas] = useState([]);
     const [error, setError] = useState(null);
     const [generatedPrompt, setGeneratedPrompt] = useState('');
+    const [promptData, setPromptData] = useState(null);
+    const [isCustomPrompt, setIsCustomPrompt] = useState(false);
+
+    // Load prompt data on component mount
+    useEffect(() => {
+        const loadPromptData = async () => {
+            try {
+                const result = await getPrompt('idea_forge');
+                if (result.success && result.data) {
+                    setPromptData(result.data);
+                    setIsCustomPrompt(result.data.is_custom || false);
+                }
+            } catch (error) {
+                console.error('Failed to load prompt:', error);
+            }
+        };
+        loadPromptData();
+    }, []);
 
     const generatePrompt = (keywords, context, creativity) => {
         let creativityDescriptor = creativity <= 3 ? "conservative and practical" : 
                                 creativity <= 7 ? "moderately innovative" : 
                                 "highly creative and unconventional";
         
+        // Use stored prompt template if available
+        if (promptData && promptData.template) {
+            const variables = {
+                keywords: keywords,
+                creativity: creativity.toString(),
+                creativity_descriptor: creativityDescriptor,
+                context_section: context.trim() ? `\n\nAdditional context: ${context}` : ''
+            };
+            
+            return replacePromptVariables(promptData.template, variables);
+        }
+        
+        // Fallback to hardcoded prompt if no template is loaded
         let prompt = `Generate 3 ${creativityDescriptor} business ideas based on: ${keywords}`;
         
         if (context.trim()) {
@@ -71,7 +102,7 @@ Format your response as a numbered list with clear sections for each idea.`;
             const aiRequest = createAIRequest(prompt, {
                 temperature: creativity / 10,
                 maxTokens: 2000,
-                systemMessage: "You are an expert business consultant helping entrepreneurs generate innovative business ideas. Provide practical, actionable suggestions."
+                systemMessage: promptData?.system_message || "You are an expert business consultant helping entrepreneurs generate innovative business ideas. Provide practical, actionable suggestions."
             });
 
             const response = await generateAIResponseV2(aiRequest);
@@ -190,7 +221,21 @@ ${idea.description}
                     borderRadius: '20px 20px 0 0'
                 }}>
                     <div>
-                        <h2 style={{ margin: 0, fontSize: '1.8em' }}>🔥 Idea Forge</h2>
+                        <h2 style={{ margin: 0, fontSize: '1.8em' }}>
+                            🔥 Idea Forge
+                            {isCustomPrompt && (
+                                <span style={{
+                                    marginLeft: '10px',
+                                    padding: '4px 8px',
+                                    background: 'rgba(255, 255, 255, 0.3)',
+                                    borderRadius: '6px',
+                                    fontSize: '0.6em',
+                                    verticalAlign: 'middle'
+                                }}>
+                                    CUSTOM PROMPT
+                                </span>
+                            )}
+                        </h2>
                         <p style={{ margin: '5px 0 0 0', opacity: 0.9 }}>AI-Powered Business Idea Generator</p>
                     </div>
                     <button 
@@ -320,36 +365,65 @@ ${idea.description}
                         </div>
                     </div>
 
-                    {/* Generate Button */}
-                    <button
-                        onClick={handleGenerate}
-                        disabled={loading || !keywords.trim()}
-                        style={{
-                            width: '100%',
-                            padding: '18px',
-                            background: loading ? '#9ca3af' : 'linear-gradient(135deg, #667eea, #764ba2)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '12px',
-                            fontSize: '18px',
-                            fontWeight: '600',
-                            cursor: loading || !keywords.trim() ? 'not-allowed' : 'pointer',
-                            marginBottom: '30px',
-                            transition: 'all 0.3s ease'
-                        }}
-                        onMouseOver={(e) => {
-                            if (!loading && keywords.trim()) {
-                                e.target.style.transform = 'translateY(-2px)';
-                                e.target.style.boxShadow = '0 10px 25px rgba(102, 126, 234, 0.3)';
-                            }
-                        }}
-                        onMouseOut={(e) => {
-                            e.target.style.transform = 'translateY(0)';
-                            e.target.style.boxShadow = 'none';
-                        }}
-                    >
-                        {loading ? '⚡ Generating Ideas...' : '🚀 Generate Business Ideas'}
-                    </button>
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', gap: '15px', marginBottom: '30px' }}>
+                        <button
+                            onClick={handleGenerate}
+                            disabled={loading || !keywords.trim()}
+                            style={{
+                                flex: 1,
+                                padding: '18px',
+                                background: loading ? '#9ca3af' : 'linear-gradient(135deg, #667eea, #764ba2)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '12px',
+                                fontSize: '18px',
+                                fontWeight: '600',
+                                cursor: loading || !keywords.trim() ? 'not-allowed' : 'pointer',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onMouseOver={(e) => {
+                                if (!loading && keywords.trim()) {
+                                    e.target.style.transform = 'translateY(-2px)';
+                                    e.target.style.boxShadow = '0 10px 25px rgba(102, 126, 234, 0.3)';
+                                }
+                            }}
+                            onMouseOut={(e) => {
+                                e.target.style.transform = 'translateY(0)';
+                                e.target.style.boxShadow = 'none';
+                            }}
+                        >
+                            {loading ? '⚡ Generating Ideas...' : '🚀 Generate Business Ideas'}
+                        </button>
+                        {generatedPrompt && (
+                            <button
+                                onClick={() => {
+                                    alert('Current Prompt:\n\n' + generatedPrompt);
+                                }}
+                                style={{
+                                    padding: '18px 24px',
+                                    background: '#f3f4f6',
+                                    color: '#4b5563',
+                                    border: '2px solid #e5e7eb',
+                                    borderRadius: '12px',
+                                    fontSize: '16px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s ease'
+                                }}
+                                onMouseOver={(e) => {
+                                    e.target.style.background = '#e5e7eb';
+                                    e.target.style.transform = 'translateY(-2px)';
+                                }}
+                                onMouseOut={(e) => {
+                                    e.target.style.background = '#f3f4f6';
+                                    e.target.style.transform = 'translateY(0)';
+                                }}
+                            >
+                                👁️ View Prompt
+                            </button>
+                        )}
+                    </div>
 
                     {/* Results Section */}
                     {(loading || ideas.length > 0) && (
