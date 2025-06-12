@@ -1,0 +1,20 @@
+# Jekyll configuration for GitHub Pages
+theme: jekyll-theme-cayman
+title: VentureLab Documentation
+description: AI-powered entrepreneurship toolkit documentation
+show_downloads: false
+
+# Navigation
+navigation:
+  - title: Home
+    url: /
+  - title: Quick Start
+    url: /quick-start
+  - title: Security
+    url: /security-best-practices
+  - title: Costs
+    url: /cost-management
+
+# Exclude files
+exclude:
+  - README.md

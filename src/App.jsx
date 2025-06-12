@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AIProvidersPage from './components/AIProvidersPage';
 import UsageStatsPage from './components/UsageStatsPage';
+import DocumentationPage from './components/DocumentationPage';
 import IdeaForge from './components/IdeaForge';
 import GlobalCompass from './components/GlobalCompass';
 import PitchPerfect from './components/PitchPerfect';
@@ -11,6 +12,7 @@ function App() {
   const [showAIProviders, setShowAIProviders] = useState(false);
   const [showPrompts, setShowPrompts] = useState(false);
   const [showUsageStats, setShowUsageStats] = useState(false);
+  const [showDocumentation, setShowDocumentation] = useState(false);
   const [currentTool, setCurrentTool] = useState(null);
 
   return (
@@ -111,6 +113,31 @@ function App() {
             }}
           >
             📊 Usage
+          </button>
+          <button 
+            onClick={() => setShowDocumentation(true)}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '1em',
+              fontWeight: '600',
+              background: 'rgba(255, 255, 255, 0.2)',
+              color: 'white',
+              cursor: 'pointer',
+              backdropFilter: 'blur(10px)',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.background = 'rgba(255, 255, 255, 0.3)';
+              e.target.style.transform = 'translateY(-2px)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+              e.target.style.transform = 'translateY(0)';
+            }}
+          >
+            📚 Documentation
           </button>
         </div>
       </div>
@@ -247,6 +274,10 @@ function App() {
       
       {showUsageStats && (
         <UsageStatsPage onClose={() => setShowUsageStats(false)} />
+      )}
+      
+      {showDocumentation && (
+        <DocumentationPage isOpen={showDocumentation} onClose={() => setShowDocumentation(false)} />
       )}
       
       {currentTool === 'idea-forge' && (
