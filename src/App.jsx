@@ -277,7 +277,7 @@ function App() {
       )}
       
       {showDocumentation && (
-        <DocumentationPage isOpen={showDocumentation} onClose={() => setShowDocumentation(false)} />
+        <DocumentationPage onClose={() => setShowDocumentation(false)} />
       )}
       
       {currentTool === 'idea-forge' && (

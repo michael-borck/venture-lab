@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const DocumentationPage = ({ isOpen, onClose }) => {
+const DocumentationPage = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState('quick-start');
 
   const documentation = {
@@ -562,25 +562,72 @@ AI provides suggestions, not facts:
     }
   };
 
-  if (!isOpen) return null;
 
   const currentDoc = documentation[activeTab];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden">
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      background: 'rgba(0, 0, 0, 0.8)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000,
+      padding: '20px'
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: '20px',
+        width: '100%',
+        maxWidth: '1200px',
+        height: '90vh',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)'
+      }}>
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6">
-          <div className="flex justify-between items-center">
+        <div style={{
+          background: 'linear-gradient(135deg, #667eea, #764ba2)',
+          color: 'white',
+          padding: '30px'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
             <div>
-              <h2 className="text-3xl font-bold mb-2">📚 VentureLab Documentation</h2>
-              <p className="opacity-90">Everything you need to know about using VentureLab</p>
+              <h2 style={{
+                fontSize: '2rem',
+                fontWeight: 'bold',
+                marginBottom: '8px',
+                margin: 0
+              }}>📚 VentureLab Documentation</h2>
+              <p style={{
+                opacity: 0.9,
+                margin: 0
+              }}>Everything you need to know about using VentureLab</p>
             </div>
             <button
               onClick={onClose}
-              className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+              style={{
+                color: 'white',
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: 'none',
+                padding: '8px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseOver={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.3)'}
+              onMouseOut={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{ width: '24px', height: '24px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -588,21 +635,50 @@ AI provides suggestions, not facts:
         </div>
 
         {/* Content */}
-        <div className="flex flex-1 overflow-hidden">
+        <div style={{
+          display: 'flex',
+          flex: 1,
+          overflow: 'hidden'
+        }}>
           {/* Sidebar */}
-          <div className="w-64 bg-gray-50 border-r border-gray-200 overflow-y-auto">
-            <nav className="p-4">
+          <div style={{
+            width: '280px',
+            background: '#f8fafc',
+            borderRight: '1px solid #e1e5e9',
+            overflowY: 'auto'
+          }}>
+            <nav style={{ padding: '20px' }}>
               {Object.entries(documentation).map(([key, doc]) => (
                 <button
                   key={key}
                   onClick={() => setActiveTab(key)}
-                  className={`w-full text-left px-4 py-3 rounded-lg mb-2 transition-all ${
-                    activeTab === key
-                      ? 'bg-purple-100 text-purple-700 font-medium'
-                      : 'hover:bg-gray-100 text-gray-700'
-                  }`}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    marginBottom: '8px',
+                    transition: 'all 0.2s',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: activeTab === key ? '#e5e7eb' : 'transparent',
+                    color: activeTab === key ? '#6366f1' : '#374151',
+                    fontWeight: activeTab === key ? '600' : '400'
+                  }}
+                  onMouseOver={(e) => {
+                    if (activeTab !== key) {
+                      e.target.style.background = '#f3f4f6';
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (activeTab !== key) {
+                      e.target.style.background = 'transparent';
+                    }
+                  }}
                 >
-                  <span className="text-xl mr-3">{doc.icon}</span>
+                  <span style={{ fontSize: '1.2rem', marginRight: '12px' }}>{doc.icon}</span>
                   <span>{doc.title}</span>
                 </button>
               ))}
@@ -610,32 +686,55 @@ AI provides suggestions, not facts:
           </div>
 
           {/* Documentation Content */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-8 max-w-4xl mx-auto">
-              <div className="prose prose-lg max-w-none">
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="text-4xl">{currentDoc.icon}</span>
-                  <h1 className="text-3xl font-bold text-gray-900 m-0">{currentDoc.title}</h1>
+          <div style={{
+            flex: 1,
+            overflowY: 'auto'
+          }}>
+            <div style={{
+              padding: '40px',
+              maxWidth: '800px',
+              margin: '0 auto'
+            }}>
+              <div style={{
+                lineHeight: '1.6',
+                color: '#374151'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  marginBottom: '32px'
+                }}>
+                  <span style={{ fontSize: '2.5rem' }}>{currentDoc.icon}</span>
+                  <h1 style={{
+                    fontSize: '2rem',
+                    fontWeight: 'bold',
+                    color: '#111827',
+                    margin: 0
+                  }}>{currentDoc.title}</h1>
                 </div>
                 <div 
-                  className="documentation-content"
+                  style={{
+                    fontSize: '1rem',
+                    lineHeight: '1.7'
+                  }}
                   dangerouslySetInnerHTML={{ 
                     __html: currentDoc.content
-                      .replace(/^#\s+(.+)$/gm, '<h1 class="text-2xl font-bold mt-8 mb-4 text-gray-900">$1</h1>')
-                      .replace(/^##\s+(.+)$/gm, '<h2 class="text-xl font-semibold mt-6 mb-3 text-gray-800">$1</h2>')
-                      .replace(/^###\s+(.+)$/gm, '<h3 class="text-lg font-medium mt-4 mb-2 text-gray-700">$1</h3>')
-                      .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-gray-900">$1</strong>')
-                      .replace(/^-\s+(.+)$/gm, '<li class="ml-6 mb-1">$1</li>')
-                      .replace(/^\d+\.\s+(.+)$/gm, '<li class="ml-6 mb-1">$1</li>')
-                      .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-4"><code>$2</code></pre>')
-                      .replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-2 py-1 rounded text-sm font-mono">$1</code>')
-                      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-purple-600 hover:text-purple-700 underline" target="_blank" rel="noopener noreferrer">$1</a>')
-                      .replace(/✅/g, '<span class="text-green-500">✓</span>')
-                      .replace(/❌/g, '<span class="text-red-500">✗</span>')
-                      .replace(/\n\n/g, '</p><p class="mb-4">')
+                      .replace(/^#\s+(.+)$/gm, '<h1 style="font-size: 1.5rem; font-weight: bold; margin-top: 2rem; margin-bottom: 1rem; color: #111827;">$1</h1>')
+                      .replace(/^##\s+(.+)$/gm, '<h2 style="font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #374151;">$1</h2>')
+                      .replace(/^###\s+(.+)$/gm, '<h3 style="font-size: 1.125rem; font-weight: 500; margin-top: 1rem; margin-bottom: 0.5rem; color: #4b5563;">$1</h3>')
+                      .replace(/\*\*(.+?)\*\*/g, '<strong style="font-weight: 600; color: #111827;">$1</strong>')
+                      .replace(/^-\s+(.+)$/gm, '<li style="margin-left: 1.5rem; margin-bottom: 0.25rem;">$1</li>')
+                      .replace(/^\d+\.\s+(.+)$/gm, '<li style="margin-left: 1.5rem; margin-bottom: 0.25rem;">$1</li>')
+                      .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre style="background: #1f2937; color: #f9fafb; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 1rem 0; font-family: monospace;"><code>$2</code></pre>')
+                      .replace(/`([^`]+)`/g, '<code style="background: #f3f4f6; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem; font-family: monospace;">$1</code>')
+                      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #7c3aed; text-decoration: underline;" target="_blank" rel="noopener noreferrer">$1</a>')
+                      .replace(/✅/g, '<span style="color: #10b981;">✓</span>')
+                      .replace(/❌/g, '<span style="color: #ef4444;">✗</span>')
+                      .replace(/\n\n/g, '</p><p style="margin-bottom: 1rem;">')
                       .replace(/^(.+)$/gm, (match) => {
                         if (match.trim() && !match.match(/^[#\-\d<]/)) {
-                          return `<p class="mb-4">${match}</p>`;
+                          return `<p style="margin-bottom: 1rem;">${match}</p>`;
                         }
                         return match;
                       })
@@ -647,12 +746,24 @@ AI provides suggestions, not facts:
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 border-t border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
+        <div style={{
+          background: '#f8fafc',
+          borderTop: '1px solid #e1e5e9',
+          padding: '20px 24px'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <p style={{
+              fontSize: '0.9rem',
+              color: '#6b7280',
+              margin: 0
+            }}>
               💡 Tip: Use Ollama for free, unlimited AI access while learning!
             </p>
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 onClick={() => {
                   const tabs = Object.keys(documentation);
@@ -661,8 +772,26 @@ AI provides suggestions, not facts:
                     setActiveTab(tabs[currentIndex - 1]);
                   }
                 }}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
                 disabled={Object.keys(documentation).indexOf(activeTab) === 0}
+                style={{
+                  padding: '8px 16px',
+                  color: '#6b7280',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: Object.keys(documentation).indexOf(activeTab) === 0 ? 'not-allowed' : 'pointer',
+                  opacity: Object.keys(documentation).indexOf(activeTab) === 0 ? 0.5 : 1,
+                  transition: 'color 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  if (!e.target.disabled) {
+                    e.target.style.color = '#374151';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!e.target.disabled) {
+                    e.target.style.color = '#6b7280';
+                  }
+                }}
               >
                 ← Previous
               </button>
@@ -674,8 +803,26 @@ AI provides suggestions, not facts:
                     setActiveTab(tabs[currentIndex + 1]);
                   }
                 }}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
                 disabled={Object.keys(documentation).indexOf(activeTab) === Object.keys(documentation).length - 1}
+                style={{
+                  padding: '8px 16px',
+                  color: '#6b7280',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: Object.keys(documentation).indexOf(activeTab) === Object.keys(documentation).length - 1 ? 'not-allowed' : 'pointer',
+                  opacity: Object.keys(documentation).indexOf(activeTab) === Object.keys(documentation).length - 1 ? 0.5 : 1,
+                  transition: 'color 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  if (!e.target.disabled) {
+                    e.target.style.color = '#374151';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!e.target.disabled) {
+                    e.target.style.color = '#6b7280';
+                  }
+                }}
               >
                 Next →
               </button>
