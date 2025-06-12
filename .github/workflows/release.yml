@@ -1,0 +1,152 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0, v2.1.3, etc.
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin'
+            arch: 'aarch64'
+            os: 'macos'
+          - platform: 'macos-latest'
+            args: '--target x86_64-apple-darwin'
+            arch: 'x86_64'
+            os: 'macos'
+          - platform: 'ubuntu-22.04'
+            args: ''
+            arch: 'x86_64'
+            os: 'linux'
+          - platform: 'windows-latest'
+            args: ''
+            arch: 'x86_64'
+            os: 'windows'
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (Ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Rust setup
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && matrix.arch == 'aarch64' && 'aarch64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Sync node version and setup cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build the app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'VentureLab ${{ github.ref_name }}'
+          releaseBody: |
+            🚀 **VentureLab ${{ github.ref_name }}**
+            
+            **AI-Powered Entrepreneurship Toolkit**
+            
+            ## What's New
+            - See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for detailed changes
+            
+            ## Downloads
+            Choose the appropriate version for your operating system:
+            
+            ### Windows
+            - **VentureLab_${{ github.ref_name }}_x64_en-US.msi** - Windows Installer (Recommended)
+            - **VentureLab_${{ github.ref_name }}_x64-setup.exe** - Windows Setup Executable
+            
+            ### macOS
+            - **VentureLab_${{ github.ref_name }}_aarch64.dmg** - Apple Silicon (M1/M2/M3 Macs)
+            - **VentureLab_${{ github.ref_name }}_x64.dmg** - Intel Macs
+            
+            ### Linux
+            - **VentureLab_${{ github.ref_name }}_amd64.deb** - Debian/Ubuntu (Recommended)
+            - **VentureLab_${{ github.ref_name }}_amd64.AppImage** - Universal Linux AppImage
+            
+            ## Installation Instructions
+            
+            ### Windows
+            1. Download the `.msi` installer
+            2. Run the installer and follow the setup wizard
+            3. Launch VentureLab from the Start Menu
+            
+            ### macOS
+            1. Download the appropriate `.dmg` file for your Mac
+            2. Open the DMG and drag VentureLab to Applications
+            3. Launch from Applications (you may need to allow in Security & Privacy settings)
+            
+            ### Linux
+            1. **Debian/Ubuntu**: Download `.deb` file and run `sudo dpkg -i VentureLab_*.deb`
+            2. **Other distros**: Download `.AppImage`, make executable with `chmod +x`, then run
+            
+            ## Features
+            - 🔥 **Idea Forge** - AI-powered business idea generation
+            - 🌍 **Global Compass** - International market research and analysis
+            - 🎤 **Pitch Perfect** - AI coaching for investor presentations
+            - 📋 **PRD Generator** - Product Requirements Document creation
+            - 🔐 **Secure API Key Management** - OS-native keychain integration
+            - 📊 **Usage Tracking** - Monitor AI costs and token usage
+            - 🧠 **Custom Prompts** - Advanced prompt engineering tools
+            - 📚 **Educational Resources** - Built-in documentation and tips
+            
+            ## AI Provider Support
+            - **Ollama** (Free, runs locally)
+            - **OpenAI** (GPT-3.5, GPT-4)
+            - **Anthropic** (Claude)
+            - **Google Gemini**
+            
+            ## Support
+            - 📖 [Documentation](https://github.com/${{ github.repository }}/tree/main/docs)
+            - 🐛 [Report Issues](https://github.com/${{ github.repository }}/issues)
+            - 💬 [Discussions](https://github.com/${{ github.repository }}/discussions)
+            
+            ---
+            
+            **First time using VentureLab?** Start with Ollama for free AI access, then explore our built-in templates and tips!
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
+
+  # Create a summary job that depends on all builds
+  release-summary:
+    needs: release
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check build results
+        run: |
+          if [[ "${{ needs.release.result }}" == "success" ]]; then
+            echo "✅ All platform builds completed successfully!"
+            echo "🎉 Release ${{ github.ref_name }} is now available for download"
+          else
+            echo "❌ Some builds failed. Check the logs above."
+            exit 1
+          fi

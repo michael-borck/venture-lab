@@ -1,6 +1,6 @@
 {
   "productName": "VentureLab",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "identifier": "com.venturelab.app",
   "build": {
     "beforeBuildCommand": "npm run build",
@@ -27,7 +27,21 @@
   "bundle": {
     "active": true,
     "category": "Education",
-    "targets": "all"
+    "targets": "all",
+    "shortDescription": "AI-powered entrepreneurship toolkit",
+    "longDescription": "VentureLab is a comprehensive AI-powered toolkit for entrepreneurs, featuring business idea generation, market research, pitch coaching, and product requirement document creation. Supports multiple AI providers including Ollama, OpenAI, Anthropic, and Google Gemini.",
+    "homepage": "https://github.com/michael-borck/venture-lab",
+    "license": "MIT",
+    "copyright": "Copyright © 2024 VentureLab. All rights reserved.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png", 
+      "icons/128x128@2x.png",
+      "icons/256x256.png",
+      "icons/512x512.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
   },
   "plugins": {
     "shell": {
