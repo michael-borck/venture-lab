@@ -17,6 +17,497 @@ export default function PromptManager({ onClose }) {
         { id: 'prd_generator', name: '📋 PRD Generator', color: '#a8edea' }
     ];
 
+    const specialTabs = [
+        { id: 'templates', name: '📚 Templates', color: '#7c3aed' },
+        { id: 'tips', name: '💡 Tips', color: '#059669' }
+    ];
+
+    const promptTemplates = {
+        idea_forge: [
+            {
+                name: "Creative Innovation",
+                description: "Generate highly creative and unconventional business ideas",
+                template: `Generate a highly innovative business idea for the {industry} industry.
+
+Requirements:
+- Innovation level: {innovation_level}/10 (where 10 is completely revolutionary)
+- Target market: {target_market}
+- Focus on solving real problems with creative solutions
+- Consider emerging technologies and trends
+- Think beyond traditional business models
+
+Please provide:
+1. Business idea name and one-line description
+2. Problem it solves
+3. Unique value proposition
+4. Target customers
+5. Revenue model
+6. Key differentiators
+7. Implementation challenges and solutions
+
+Be creative and think outside the box!`,
+                variables: ["industry", "innovation_level", "target_market"]
+            },
+            {
+                name: "Sustainable Business",
+                description: "Focus on environmentally conscious business opportunities",
+                template: `Create a sustainable business idea for the {industry} industry.
+
+Focus Areas:
+- Environmental sustainability
+- Social impact
+- Circular economy principles
+- Innovation level: {innovation_level}/10
+
+Requirements:
+1. Address a significant environmental or social challenge
+2. Demonstrate clear sustainability benefits
+3. Ensure economic viability
+4. Consider ESG (Environmental, Social, Governance) factors
+
+Provide:
+- Business concept and mission
+- Environmental/social problem addressed
+- Sustainable solution approach
+- Impact measurement metrics
+- Revenue model that supports sustainability
+- Scalability potential
+- Partnership opportunities with NGOs or government`,
+                variables: ["industry", "innovation_level"]
+            },
+            {
+                name: "Tech Disruption",
+                description: "Leverage emerging technologies for business innovation",
+                template: `Design a technology-driven business idea for {industry}.
+
+Technology Focus:
+- Leverage emerging tech (AI, blockchain, IoT, AR/VR, etc.)
+- Innovation level: {innovation_level}/10
+- Target market: {target_market}
+
+Requirements:
+1. Identify a technology gap or opportunity
+2. Explain how technology solves existing problems
+3. Consider user adoption challenges
+4. Address data privacy and security concerns
+
+Deliver:
+- Tech-enabled business model
+- Technology stack overview
+- User experience design principles
+- Competitive advantage through technology
+- Development roadmap (MVP to full product)
+- Market entry strategy
+- Potential technical challenges and solutions`,
+                variables: ["industry", "innovation_level", "target_market"]
+            }
+        ],
+        global_compass: [
+            {
+                name: "Market Entry Strategy",
+                description: "Comprehensive analysis for entering new international markets",
+                template: `Analyze the market opportunity for {business_idea} in {target_country}.
+
+Analysis Framework:
+1. Market Size & Opportunity
+   - Total addressable market (TAM)
+   - Market growth trends
+   - Competitive landscape
+
+2. Regulatory Environment
+   - Legal requirements
+   - Business registration process
+   - Industry-specific regulations
+   - Tax implications
+
+3. Cultural Considerations
+   - Consumer behavior patterns
+   - Cultural norms affecting business
+   - Communication preferences
+   - Local business practices
+
+4. Entry Strategy Recommendations
+   - Recommended entry mode (direct, partnership, acquisition)
+   - Timeline and milestones
+   - Investment requirements
+   - Risk mitigation strategies
+
+5. Success Factors
+   - Key success indicators
+   - Critical partnerships needed
+   - Local hiring considerations
+   - Marketing and distribution channels
+
+Provide actionable insights with specific recommendations.`,
+                variables: ["business_idea", "target_country"]
+            },
+            {
+                name: "Competitive Analysis",
+                description: "Deep dive into competitive landscape and positioning",
+                template: `Conduct a comprehensive competitive analysis for {business_idea} in {target_country}.
+
+Competition Analysis:
+1. Direct Competitors
+   - Identify top 3-5 direct competitors
+   - Market share and positioning
+   - Pricing strategies
+   - Strengths and weaknesses
+
+2. Indirect Competitors
+   - Alternative solutions customers use
+   - Substitute products/services
+   - Emerging competitive threats
+
+3. Market Positioning
+   - Gaps in current market offerings
+   - Differentiation opportunities
+   - Value proposition positioning
+   - Target customer segments underserved
+
+4. Competitive Strategy
+   - Recommended positioning strategy
+   - Pricing approach vs. competitors
+   - Marketing differentiation tactics
+   - Innovation opportunities
+
+5. SWOT Analysis
+   - Internal strengths and weaknesses
+   - External opportunities and threats
+   - Strategic recommendations
+
+Include specific company names, market data, and strategic recommendations.`,
+                variables: ["business_idea", "target_country"]
+            }
+        ],
+        pitch_perfect: [
+            {
+                name: "Investor Pitch Coach",
+                description: "Comprehensive feedback for investor presentations",
+                template: `Analyze this investor pitch for {business_idea} and provide detailed coaching feedback.
+
+Pitch Content: {pitch_content}
+
+Evaluation Criteria:
+1. Problem & Solution Clarity (1-10)
+   - Is the problem clearly defined and compelling?
+   - Does the solution effectively address the problem?
+   - Feedback and improvement suggestions
+
+2. Market Opportunity (1-10)
+   - Market size validation and credibility
+   - Target customer definition
+   - Go-to-market strategy clarity
+
+3. Business Model Viability (1-10)
+   - Revenue model clarity
+   - Unit economics and scalability
+   - Competitive advantages
+
+4. Team & Execution (1-10)
+   - Team experience and expertise
+   - Execution capability demonstration
+   - Track record and credibility
+
+5. Financial Projections (1-10)
+   - Realistic and well-supported numbers
+   - Clear path to profitability
+   - Funding requirements justification
+
+6. Presentation Quality (1-10)
+   - Story flow and narrative
+   - Slide design and clarity
+   - Call to action effectiveness
+
+For each section:
+- Provide a score (1-10)
+- List specific strengths
+- Identify areas for improvement
+- Give actionable recommendations
+- Suggest specific changes or additions
+
+Overall recommendation: [READY/NEEDS WORK/MAJOR REVISION]`,
+                variables: ["business_idea", "pitch_content"]
+            },
+            {
+                name: "Demo Day Preparation",
+                description: "Optimize pitch for startup competitions and demo days",
+                template: `Prepare this pitch for a {event_type} demo day presentation.
+
+Pitch: {pitch_content}
+Time Limit: {time_limit} minutes
+
+Demo Day Optimization:
+1. Time Management
+   - Content allocation per minute
+   - Pacing recommendations
+   - Key messages per time segment
+
+2. Audience Adaptation
+   - Judge/audience profile considerations
+   - Messaging adjustments for {event_type}
+   - Industry-specific language and examples
+
+3. Visual Impact
+   - Slide design for large screen presentation
+   - Key visual elements to emphasize
+   - Demo or video integration suggestions
+
+4. Memorable Moments
+   - Hook opening statement
+   - Key quotable phrases
+   - Strong closing call-to-action
+
+5. Q&A Preparation
+   - Anticipated questions from judges
+   - Concise answer frameworks
+   - Evidence and data to have ready
+
+6. Delivery Coaching
+   - Voice projection and pacing
+   - Body language and stage presence
+   - Handling technical difficulties
+
+Provide a restructured pitch outline optimized for the demo day format with specific timing and delivery notes.`,
+                variables: ["event_type", "pitch_content", "time_limit"]
+            }
+        ],
+        prd_generator: [
+            {
+                name: "SaaS Product Requirements",
+                description: "Comprehensive PRD for software-as-a-service products",
+                template: `Create a detailed Product Requirements Document for {product_name}, a SaaS solution for {target_market}.
+
+Product Vision: {product_vision}
+
+## 1. Executive Summary
+- Product overview and mission
+- Target market and user personas
+- Key value propositions
+- Success metrics
+
+## 2. Product Goals & Objectives
+- Primary business objectives
+- User experience goals
+- Technical objectives
+- Timeline and milestones
+
+## 3. User Stories & Requirements
+### Core User Stories:
+- As a [user type], I want [functionality] so that [benefit]
+- Include at least 10 detailed user stories
+- Prioritize features (Must-have, Should-have, Could-have)
+
+## 4. Functional Requirements
+### Core Features:
+- User authentication and authorization
+- Dashboard and analytics
+- Data management capabilities
+- Integration requirements
+- Mobile responsiveness
+
+### Advanced Features:
+- API capabilities
+- Third-party integrations
+- Automation features
+- Customization options
+
+## 5. Technical Requirements
+- System architecture overview
+- Database requirements
+- Security and compliance needs
+- Performance requirements
+- Scalability considerations
+
+## 6. User Experience Design
+- Information architecture
+- User flow diagrams
+- Key interface requirements
+- Accessibility standards
+
+## 7. Success Metrics & KPIs
+- User acquisition metrics
+- Engagement metrics
+- Business metrics
+- Technical performance metrics
+
+Make the PRD actionable with specific requirements and acceptance criteria.`,
+                variables: ["product_name", "target_market", "product_vision"]
+            },
+            {
+                name: "Mobile App PRD",
+                description: "Comprehensive requirements for mobile applications",
+                template: `Generate a Product Requirements Document for {product_name}, a mobile app targeting {target_market}.
+
+App Concept: {product_vision}
+
+## 1. Product Overview
+- App purpose and core value proposition
+- Target platforms (iOS, Android, cross-platform)
+- Market positioning and differentiation
+
+## 2. User Research & Personas
+- Primary user personas (3-5 detailed personas)
+- User journey mapping
+- Pain points and needs analysis
+- Behavioral patterns and preferences
+
+## 3. Feature Specifications
+
+### MVP Features (Phase 1):
+- Core functionality requirements
+- Essential user flows
+- Basic UI/UX requirements
+- Performance standards
+
+### Future Features (Phase 2+):
+- Advanced functionality
+- Premium features
+- Social and sharing capabilities
+- Personalization features
+
+## 4. Technical Specifications
+- Platform-specific requirements
+- Device compatibility
+- Offline functionality needs
+- Data synchronization requirements
+- Third-party SDK integrations
+
+## 5. Design Requirements
+- UI/UX guidelines and principles
+- Branding and visual identity
+- Accessibility requirements
+- Responsive design considerations
+- Platform-specific design patterns
+
+## 6. Performance & Quality
+- Loading time requirements
+- Battery usage optimization
+- Memory usage constraints
+- Crash rate targets
+- User rating goals
+
+## 7. Monetization Strategy
+- Revenue model (freemium, subscription, ads, etc.)
+- In-app purchase requirements
+- Analytics and tracking needs
+- A/B testing framework
+
+## 8. Launch & Marketing
+- App store optimization requirements
+- Launch strategy and timeline
+- User acquisition plans
+- Retention and engagement tactics
+
+Include specific, measurable requirements with clear acceptance criteria.`,
+                variables: ["product_name", "target_market", "product_vision"]
+            }
+        ]
+    };
+
+    const promptEngineeringTips = [
+        {
+            category: "Structure & Clarity",
+            tips: [
+                {
+                    title: "Use Clear Instructions",
+                    content: "Start with action verbs like 'Generate', 'Analyze', 'Create', 'Explain'. Be specific about what you want the AI to do.",
+                    example: "✅ Generate 5 innovative business ideas for sustainable packaging\n❌ Tell me about packaging"
+                },
+                {
+                    title: "Provide Context",
+                    content: "Give background information that helps the AI understand the scope and requirements.",
+                    example: "✅ As a startup consultant working with early-stage companies...\n❌ Help me with business ideas"
+                },
+                {
+                    title: "Specify Output Format",
+                    content: "Tell the AI exactly how you want the response structured (bullet points, numbered lists, paragraphs, etc.).",
+                    example: "✅ Provide your analysis in numbered sections with bullet points\n❌ Give me some analysis"
+                }
+            ]
+        },
+        {
+            category: "Variables & Personalization", 
+            tips: [
+                {
+                    title: "Use Descriptive Variables",
+                    content: "Variable names should be clear and self-explanatory. Use {industry} instead of {x}.",
+                    example: "✅ {target_market}, {innovation_level}, {budget_range}\n❌ {a}, {b}, {c}"
+                },
+                {
+                    title: "Provide Variable Examples",
+                    content: "Give sample values to help users understand what to input for each variable.",
+                    example: "✅ Industry (e.g., 'fintech', 'healthcare', 'education')\n❌ {industry}"
+                },
+                {
+                    title: "Limit Variable Count",
+                    content: "Use 3-7 variables maximum to keep prompts user-friendly and focused.",
+                    example: "✅ Key variables: industry, target_market, budget\n❌ 15+ different variables"
+                }
+            ]
+        },
+        {
+            category: "Effective Prompting",
+            tips: [
+                {
+                    title: "Include Examples",
+                    content: "Show the AI what good output looks like by providing examples or templates.",
+                    example: "✅ Format: '1. Business Name: [Name] - [One-line description]'\n❌ List some businesses"
+                },
+                {
+                    title: "Set Constraints",
+                    content: "Define boundaries like word count, number of ideas, or specific requirements.",
+                    example: "✅ Generate exactly 3 ideas, each with 2-3 sentences\n❌ Give me some ideas"
+                },
+                {
+                    title: "Ask for Reasoning",
+                    content: "Request explanations and justifications to get more valuable insights.",
+                    example: "✅ Explain why this approach would work in the current market\n❌ Is this a good idea?"
+                }
+            ]
+        },
+        {
+            category: "Business-Specific Tips",
+            tips: [
+                {
+                    title: "Industry Context Matters",
+                    content: "Different industries have unique terminology, regulations, and challenges. Tailor your prompts accordingly.",
+                    example: "✅ Consider healthcare compliance (HIPAA) and regulatory requirements\n❌ Generic business advice"
+                },
+                {
+                    title: "Specify Target Audience",
+                    content: "Be clear about who the end users or customers are for more relevant outputs.",
+                    example: "✅ For B2B SaaS targeting mid-market companies (100-500 employees)\n❌ For businesses"
+                },
+                {
+                    title: "Include Market Context",
+                    content: "Mention geographic markets, economic conditions, or trending factors.",
+                    example: "✅ Consider the post-pandemic remote work trend in North America\n❌ General market conditions"
+                }
+            ]
+        }
+    ];
+
+    const applyTemplate = async (template, toolId) => {
+        setEditingPrompts(prev => ({ ...prev, [toolId]: template.template }));
+        
+        // Update sample variables with template defaults
+        const templateVars = {};
+        template.variables.forEach(varName => {
+            // Find matching variable in the current prompt definition
+            const promptVar = prompts[toolId]?.variables.find(v => v.name === varName);
+            templateVars[varName] = promptVar?.example || `[${varName}]`;
+        });
+        
+        setSampleVariables(prev => ({ ...prev, [toolId]: templateVars }));
+        setSaveStatus(prev => ({ ...prev, [toolId]: null }));
+        
+        // Show success message
+        setSaveStatus(prev => ({ ...prev, [toolId]: 'template-applied' }));
+        setTimeout(() => {
+            setSaveStatus(prev => ({ ...prev, [toolId]: null }));
+        }, 2000);
+    };
+
     useEffect(() => {
         // Initialize editing prompts and sample variables when prompts load
         if (prompts && Object.keys(prompts).length > 0) {
@@ -409,6 +900,21 @@ export default function PromptManager({ onClose }) {
                             )}
                         </button>
                     ))}
+                    <div style={{ width: '20px' }}></div>
+                    {specialTabs.map(tab => (
+                        <button
+                            key={tab.id}
+                            className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
+                            onClick={() => setActiveTab(tab.id)}
+                            style={{
+                                color: activeTab === tab.id ? tab.color : undefined,
+                                background: activeTab === tab.id ? 'white' : 'rgba(255, 255, 255, 0.7)',
+                                border: activeTab === tab.id ? `2px solid ${tab.color}` : '2px solid #cbd5e1'
+                            }}
+                        >
+                            {tab.name}
+                        </button>
+                    ))}
                 </div>
 
                 {/* Content */}
@@ -420,7 +926,163 @@ export default function PromptManager({ onClose }) {
                     borderTop: '2px solid #cbd5e1',
                     borderRadius: '0 0 20px 20px'
                 }}>
-                    {prompts[activeTab] && (
+                    {activeTab === 'templates' ? (
+                        <div>
+                            <h2 style={{ margin: '0 0 20px 0', color: '#333', fontSize: '1.8em' }}>
+                                📚 Prompt Templates Library
+                            </h2>
+                            <p style={{ margin: '0 0 30px 0', color: '#666', lineHeight: '1.6' }}>
+                                Professional prompt templates to help you get better results from AI. Click "Apply Template" to use any template as a starting point for your custom prompts.
+                            </p>
+                            
+                            {tools.map(tool => (
+                                <div key={tool.id} style={{ marginBottom: '40px' }}>
+                                    <h3 style={{ 
+                                        margin: '0 0 15px 0', 
+                                        color: tool.color, 
+                                        fontSize: '1.3em',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '10px'
+                                    }}>
+                                        {tool.name}
+                                    </h3>
+                                    
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+                                        gap: '15px'
+                                    }}>
+                                        {promptTemplates[tool.id]?.map((template, index) => (
+                                            <div key={index} style={{
+                                                background: '#f8fafc',
+                                                border: '1px solid #e1e5e9',
+                                                borderRadius: '12px',
+                                                padding: '20px',
+                                                transition: 'all 0.2s',
+                                                cursor: 'pointer'
+                                            }}>
+                                                <h4 style={{ 
+                                                    margin: '0 0 8px 0', 
+                                                    color: '#333',
+                                                    fontSize: '1.1em'
+                                                }}>
+                                                    {template.name}
+                                                </h4>
+                                                <p style={{ 
+                                                    margin: '0 0 15px 0', 
+                                                    color: '#666',
+                                                    fontSize: '0.9em',
+                                                    lineHeight: '1.4'
+                                                }}>
+                                                    {template.description}
+                                                </p>
+                                                
+                                                <div style={{ 
+                                                    marginBottom: '15px',
+                                                    fontSize: '0.8em',
+                                                    color: '#999'
+                                                }}>
+                                                    Variables: {template.variables.map(v => `{${v}}`).join(', ')}
+                                                </div>
+                                                
+                                                <button
+                                                    onClick={() => applyTemplate(template, tool.id)}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '8px 16px',
+                                                        background: tool.color,
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '6px',
+                                                        cursor: 'pointer',
+                                                        fontSize: '0.9em',
+                                                        fontWeight: '600',
+                                                        transition: 'opacity 0.2s'
+                                                    }}
+                                                    onMouseOver={(e) => e.target.style.opacity = '0.8'}
+                                                    onMouseOut={(e) => e.target.style.opacity = '1'}
+                                                >
+                                                    Apply Template to {tool.name}
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : activeTab === 'tips' ? (
+                        <div>
+                            <h2 style={{ margin: '0 0 20px 0', color: '#333', fontSize: '1.8em' }}>
+                                💡 Prompt Engineering Tips
+                            </h2>
+                            <p style={{ margin: '0 0 30px 0', color: '#666', lineHeight: '1.6' }}>
+                                Master the art of prompt engineering with these proven techniques and best practices for getting better results from AI models.
+                            </p>
+                            
+                            {promptEngineeringTips.map((category, categoryIndex) => (
+                                <div key={categoryIndex} style={{ marginBottom: '40px' }}>
+                                    <h3 style={{ 
+                                        margin: '0 0 20px 0', 
+                                        color: '#059669', 
+                                        fontSize: '1.4em',
+                                        borderBottom: '2px solid #059669',
+                                        paddingBottom: '8px'
+                                    }}>
+                                        {category.category}
+                                    </h3>
+                                    
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
+                                        gap: '20px'
+                                    }}>
+                                        {category.tips.map((tip, tipIndex) => (
+                                            <div key={tipIndex} style={{
+                                                background: '#f0fdf4',
+                                                border: '1px solid #bbf7d0',
+                                                borderRadius: '12px',
+                                                padding: '20px'
+                                            }}>
+                                                <h4 style={{ 
+                                                    margin: '0 0 10px 0', 
+                                                    color: '#059669',
+                                                    fontSize: '1.1em'
+                                                }}>
+                                                    💡 {tip.title}
+                                                </h4>
+                                                <p style={{ 
+                                                    margin: '0 0 15px 0', 
+                                                    color: '#374151',
+                                                    lineHeight: '1.5'
+                                                }}>
+                                                    {tip.content}
+                                                </p>
+                                                
+                                                <div style={{
+                                                    background: 'white',
+                                                    border: '1px solid #d1fae5',
+                                                    borderRadius: '8px',
+                                                    padding: '12px',
+                                                    fontSize: '0.9em',
+                                                    fontFamily: 'Monaco, Consolas, monospace'
+                                                }}>
+                                                    <strong style={{ color: '#059669' }}>Example:</strong>
+                                                    <pre style={{ 
+                                                        margin: '8px 0 0 0', 
+                                                        whiteSpace: 'pre-wrap',
+                                                        color: '#374151'
+                                                    }}>
+                                                        {tip.example}
+                                                    </pre>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : prompts[activeTab] && (
                         <div>
                             {/* Prompt Info */}
                             <div style={{
@@ -465,6 +1127,9 @@ export default function PromptManager({ onClose }) {
                                         )}
                                         {saveStatus[activeTab] === 'reset' && (
                                             <span style={{ color: '#3b82f6', fontSize: '0.9em' }}>✓ Reset to default</span>
+                                        )}
+                                        {saveStatus[activeTab] === 'template-applied' && (
+                                            <span style={{ color: '#7c3aed', fontSize: '0.9em' }}>✓ Template applied</span>
                                         )}
                                         {saveStatus[activeTab] === 'error' && (
                                             <span style={{ color: '#ef4444', fontSize: '0.9em' }}>✗ Error saving</span>
