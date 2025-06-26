@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { open } from '@tauri-apps/plugin-shell';
 import AIProvidersPage from './components/AIProvidersPage';
 import UsageStatsPage from './components/UsageStatsPage';
 import DocumentationPage from './components/DocumentationPage';
@@ -144,10 +145,10 @@ function App() {
       
       {/* Tools Grid */}
       <div style={{
-        maxWidth: '1000px',
+        maxWidth: '900px',
         margin: '0 auto',
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
         gap: '20px',
         padding: '0 20px'
       }}>
@@ -295,6 +296,73 @@ function App() {
       {currentTool === 'prd-generator' && (
         <PRDGenerator onClose={() => setCurrentTool(null)} />
       )}
+      
+      {/* Footer */}
+      <footer style={{
+        marginTop: '60px',
+        paddingTop: '40px',
+        borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+        textAlign: 'center',
+        opacity: 0.8
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '30px',
+          flexWrap: 'wrap'
+        }}>
+          <button 
+            onClick={() => open('https://github.com/michael-borck/venture-lab')}
+            style={{
+              color: 'white',
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '1em',
+              fontWeight: '500',
+              transition: 'opacity 0.3s ease',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+            onMouseOver={(e) => e.target.style.opacity = '0.7'}
+            onMouseOut={(e) => e.target.style.opacity = '1'}
+          >
+            <span style={{ fontSize: '1.2em' }}>⭐</span>
+            GitHub Repository
+          </button>
+          <button 
+            onClick={() => open('https://x.com/michael_borck')}
+            style={{
+              color: 'white',
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '1em',
+              fontWeight: '500',
+              transition: 'opacity 0.3s ease',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+            onMouseOver={(e) => e.target.style.opacity = '0.7'}
+            onMouseOut={(e) => e.target.style.opacity = '1'}
+          >
+            <span style={{ fontSize: '1.2em' }}>🐦</span>
+            Follow on X
+          </button>
+        </div>
+        <p style={{
+          marginTop: '20px',
+          fontSize: '0.9em',
+          opacity: 0.6
+        }}>
+          Built with ❤️ for entrepreneurs everywhere
+        </p>
+      </footer>
     </div>
   );
 }
