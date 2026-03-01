@@ -1,5 +1,9 @@
 # VentureLab 🚀
 
+<!-- BADGES:START -->
+[![ai](https://img.shields.io/badge/-ai-ff6f00?style=flat-square)](https://github.com/topics/ai) [![business-innovation](https://img.shields.io/badge/-business--innovation-blue?style=flat-square)](https://github.com/topics/business-innovation) [![desktop-application](https://img.shields.io/badge/-desktop--application-blue?style=flat-square)](https://github.com/topics/desktop-application) [![education](https://img.shields.io/badge/-education-blue?style=flat-square)](https://github.com/topics/education) [![entrepreneurship](https://img.shields.io/badge/-entrepreneurship-blue?style=flat-square)](https://github.com/topics/entrepreneurship) [![html](https://img.shields.io/badge/-html-e34f26?style=flat-square)](https://github.com/topics/html) [![javascript](https://img.shields.io/badge/-javascript-f7df1e?style=flat-square)](https://github.com/topics/javascript) [![market-research](https://img.shields.io/badge/-market--research-blue?style=flat-square)](https://github.com/topics/market-research) [![rust](https://img.shields.io/badge/-rust-000000?style=flat-square)](https://github.com/topics/rust) [![pitch-presentation](https://img.shields.io/badge/-pitch--presentation-blue?style=flat-square)](https://github.com/topics/pitch-presentation)
+<!-- BADGES:END -->
+
 > **Where AI meets entrepreneurship** - Your comprehensive AI-powered business laboratory for learning, experimenting, and launching ventures.
 
 VentureLab is an educational desktop application that combines artificial intelligence with entrepreneurship education, providing four powerful tools to guide aspiring entrepreneurs through the complete business development journey.
