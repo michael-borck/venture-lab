@@ -317,8 +317,8 @@ async fn test_gemini_connection(
         }),
     };
 
-    let url = format!("{}/models?key={}", provider.base_url, api_key);
-    let response = client.get(&url).send().await;
+    let url = format!("{}/models", provider.base_url);
+    let response = client.get(&url).header("x-goog-api-key", api_key).send().await;
 
     match response {
         Ok(resp) if resp.status().is_success() => {
@@ -491,12 +491,15 @@ async fn generate_ai_response_v2(
                     usage: None,
                 }
             } else {
+                // Error string isn't a structured APIError (e.g. a raw transport failure).
+                // Never surface raw internals to the UI; log for debugging.
+                eprintln!("Unhandled AI error ({} {}): {}", provider_type, model, e);
                 AIResponse {
                     content: String::new(),
                     provider: provider_type.clone(),
                     model: model.clone(),
                     success: false,
-                    error: Some(e),
+                    error: Some("An unexpected error occurred. See the application logs.".to_string()),
                     usage: None,
                 }
             }
@@ -610,11 +613,12 @@ async fn generate_openai_response(
     
     if !response.status().is_success() {
         let error_text = response.text().await.unwrap_or_default();
+        eprintln!("OpenAI API error response: {}", error_text);
         return Ok(GenerateResponse {
             content: String::new(),
             provider: "openai".to_string(),
             success: false,
-            error: Some(format!("OpenAI API error: {}", error_text)),
+            error: Some("OpenAI request failed. Check your API key and model, then try again.".to_string()),
         });
     }
     
@@ -721,11 +725,12 @@ async fn generate_anthropic_response(
 
     if !response.status().is_success() {
         let error_text = response.text().await.unwrap_or_default();
+        eprintln!("Anthropic API error response: {}", error_text);
         return Ok(GenerateResponse {
             content: String::new(),
             provider: "anthropic".to_string(),
             success: false,
-            error: Some(format!("Anthropic API error: {}", error_text)),
+            error: Some("Anthropic request failed. Check your API key and model, then try again.".to_string()),
         });
     }
 
@@ -778,14 +783,14 @@ async fn generate_gemini_response(
         }
     });
 
-    let url = format!("{}/models/{}:generateContent?key={}", 
-        provider.base_url, 
-        provider.model, 
-        &api_key
+    let url = format!("{}/models/{}:generateContent",
+        provider.base_url,
+        provider.model
     );
     
     let response = client
         .post(&url)
+        .header("x-goog-api-key", &api_key)
         .header("Content-Type", "application/json")
         .json(&gemini_request)
         .send()
@@ -794,11 +799,12 @@ async fn generate_gemini_response(
 
     if !response.status().is_success() {
         let error_text = response.text().await.unwrap_or_default();
+        eprintln!("Gemini API error response: {}", error_text);
         return Ok(GenerateResponse {
             content: String::new(),
             provider: "gemini".to_string(),
             success: false,
-            error: Some(format!("Gemini API error: {}", error_text)),
+            error: Some("Gemini request failed. Check your API key and model, then try again.".to_string()),
         });
     }
 
@@ -832,7 +838,20 @@ async fn save_file_to_downloads(
         .download_dir()
         .map_err(|e| format!("Failed to get downloads directory: {}", e))?;
     
-    let file_path = downloads_dir.join(filename);
+    // Reject anything that isn't a plain file name: no separators, traversal, or absolute
+    // paths. Rust's PathBuf::join replaces the base on an absolute input, so without this
+    // a caller-supplied filename could write outside the downloads directory.
+    let safe = std::path::Path::new(&filename)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .map(|n| n == filename && !n.is_empty() && n != "." && n != "..")
+        .unwrap_or(false);
+    if !safe {
+        return Err(format!(
+            "Invalid filename: must be a plain file name without path separators or traversal (got '{filename}')"
+        ));
+    }
+    let file_path = downloads_dir.join(&filename);
     
     tokio::fs::write(&file_path, content)
         .await

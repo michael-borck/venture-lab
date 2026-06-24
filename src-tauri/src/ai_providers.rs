@@ -42,10 +42,6 @@ pub struct ModelInfo {
 pub trait AIProvider {
     async fn generate(&self, request: &AIRequest) -> Result<AIResponse, String>;
     async fn list_models(&self) -> Result<Vec<ModelInfo>, String>;
-    async fn test_connection(&self) -> Result<bool, String>;
-    fn get_provider_name(&self) -> &str;
-    fn get_default_model(&self) -> &str;
-    fn supports_system_messages(&self) -> bool;
 }
 
 pub struct OpenAIProvider {
@@ -208,38 +204,6 @@ impl AIProvider for OpenAIProvider {
 
         Ok(models)
     }
-
-    async fn test_connection(&self) -> Result<bool, String> {
-        let api_key = match secure_storage::retrieve_api_key(&self.config.provider_type) {
-            Ok(Some(key)) => key,
-            Ok(None) => return Ok(false),
-            Err(_) => return Ok(false),
-        };
-
-        let url = format!("{}/models", self.config.base_url);
-        let response = self.client
-            .get(&url)
-            .header("Authorization", format!("Bearer {}", api_key))
-            .send()
-            .await;
-
-        match response {
-            Ok(resp) => Ok(resp.status().is_success()),
-            Err(_) => Ok(false),
-        }
-    }
-
-    fn get_provider_name(&self) -> &str {
-        "openai"
-    }
-
-    fn get_default_model(&self) -> &str {
-        "gpt-4"
-    }
-
-    fn supports_system_messages(&self) -> bool {
-        true
-    }
 }
 
 pub struct AnthropicProvider {
@@ -378,47 +342,6 @@ impl AIProvider for AnthropicProvider {
             },
         ])
     }
-
-    async fn test_connection(&self) -> Result<bool, String> {
-        let api_key = match secure_storage::retrieve_api_key(&self.config.provider_type) {
-            Ok(Some(key)) => key,
-            Ok(None) => return Ok(false),
-            Err(_) => return Ok(false),
-        };
-
-        let test_payload = serde_json::json!({
-            "model": "claude-3-haiku-20240307",
-            "max_tokens": 1,
-            "messages": [{"role": "user", "content": "test"}]
-        });
-
-        let url = format!("{}/v1/messages", self.config.base_url);
-        let response = self.client
-            .post(&url)
-            .header("x-api-key", &api_key)
-            .header("anthropic-version", "2023-06-01")
-            .header("Content-Type", "application/json")
-            .json(&test_payload)
-            .send()
-            .await;
-
-        match response {
-            Ok(resp) => Ok(resp.status().is_success()),
-            Err(_) => Ok(false),
-        }
-    }
-
-    fn get_provider_name(&self) -> &str {
-        "anthropic"
-    }
-
-    fn get_default_model(&self) -> &str {
-        "claude-3-sonnet-20240229"
-    }
-
-    fn supports_system_messages(&self) -> bool {
-        true
-    }
 }
 
 pub struct GeminiProvider {
@@ -474,14 +397,14 @@ impl AIProvider for GeminiProvider {
             }
         });
 
-        let url = format!("{}/models/{}:generateContent?key={}", 
-            self.config.base_url, 
-            self.config.model, 
-            &api_key
+        let url = format!("{}/models/{}:generateContent",
+            self.config.base_url,
+            self.config.model
         );
         
         let response = self.client
             .post(&url)
+            .header("x-goog-api-key", &api_key)
             .header("Content-Type", "application/json")
             .json(&payload)
             .send()
@@ -547,9 +470,10 @@ impl AIProvider for GeminiProvider {
             Err(e) => return Err(format!("Failed to retrieve API key: {}", e)),
         };
 
-        let url = format!("{}/models?key={}", self.config.base_url, &api_key);
+        let url = format!("{}/models", self.config.base_url);
         let response = self.client
             .get(&url)
+            .header("x-goog-api-key", &api_key)
             .send()
             .await
             .map_err(|e| format!("Request failed: {}", e))?;
@@ -581,37 +505,6 @@ impl AIProvider for GeminiProvider {
             .collect();
 
         Ok(models)
-    }
-
-    async fn test_connection(&self) -> Result<bool, String> {
-        let api_key = match secure_storage::retrieve_api_key(&self.config.provider_type) {
-            Ok(Some(key)) => key,
-            Ok(None) => return Ok(false),
-            Err(_) => return Ok(false),
-        };
-
-        let url = format!("{}/models?key={}", self.config.base_url, &api_key);
-        let response = self.client
-            .get(&url)
-            .send()
-            .await;
-
-        match response {
-            Ok(resp) => Ok(resp.status().is_success()),
-            Err(_) => Ok(false),
-        }
-    }
-
-    fn get_provider_name(&self) -> &str {
-        "gemini"
-    }
-
-    fn get_default_model(&self) -> &str {
-        "gemini-pro"
-    }
-
-    fn supports_system_messages(&self) -> bool {
-        false // Gemini handles system messages differently
     }
 }
 
@@ -757,37 +650,6 @@ impl AIProvider for OllamaProvider {
 
         Ok(models)
     }
-
-    async fn test_connection(&self) -> Result<bool, String> {
-        let url = format!("{}/api/tags", self.config.base_url);
-        let mut request_builder = self.client.get(&url);
-        
-        // Check for optional bearer token (for proxied Ollama servers)
-        if let Ok(Some(bearer_token)) = secure_storage::retrieve_api_key(&self.config.provider_type) {
-            request_builder = request_builder.header("Authorization", format!("Bearer {}", bearer_token));
-        }
-        
-        let response = request_builder
-            .send()
-            .await;
-
-        match response {
-            Ok(resp) => Ok(resp.status().is_success()),
-            Err(_) => Ok(false),
-        }
-    }
-
-    fn get_provider_name(&self) -> &str {
-        "ollama"
-    }
-
-    fn get_default_model(&self) -> &str {
-        "llama3.1"
-    }
-
-    fn supports_system_messages(&self) -> bool {
-        true // Via prompt formatting
-    }
 }
 
 pub enum ProviderEnum {
@@ -813,42 +675,6 @@ impl AIProvider for ProviderEnum {
             ProviderEnum::Anthropic(provider) => provider.list_models().await,
             ProviderEnum::Gemini(provider) => provider.list_models().await,
             ProviderEnum::Ollama(provider) => provider.list_models().await,
-        }
-    }
-
-    async fn test_connection(&self) -> Result<bool, String> {
-        match self {
-            ProviderEnum::OpenAI(provider) => provider.test_connection().await,
-            ProviderEnum::Anthropic(provider) => provider.test_connection().await,
-            ProviderEnum::Gemini(provider) => provider.test_connection().await,
-            ProviderEnum::Ollama(provider) => provider.test_connection().await,
-        }
-    }
-
-    fn get_provider_name(&self) -> &str {
-        match self {
-            ProviderEnum::OpenAI(provider) => provider.get_provider_name(),
-            ProviderEnum::Anthropic(provider) => provider.get_provider_name(),
-            ProviderEnum::Gemini(provider) => provider.get_provider_name(),
-            ProviderEnum::Ollama(provider) => provider.get_provider_name(),
-        }
-    }
-
-    fn get_default_model(&self) -> &str {
-        match self {
-            ProviderEnum::OpenAI(provider) => provider.get_default_model(),
-            ProviderEnum::Anthropic(provider) => provider.get_default_model(),
-            ProviderEnum::Gemini(provider) => provider.get_default_model(),
-            ProviderEnum::Ollama(provider) => provider.get_default_model(),
-        }
-    }
-
-    fn supports_system_messages(&self) -> bool {
-        match self {
-            ProviderEnum::OpenAI(provider) => provider.supports_system_messages(),
-            ProviderEnum::Anthropic(provider) => provider.supports_system_messages(),
-            ProviderEnum::Gemini(provider) => provider.supports_system_messages(),
-            ProviderEnum::Ollama(provider) => provider.supports_system_messages(),
         }
     }
 }
@@ -878,11 +704,11 @@ mod tests {
 
     #[test]
     fn test_provider_creation() {
-        let config = create_test_config("openai");
-        let provider = create_provider(config);
-        assert_eq!(provider.get_provider_name(), "openai");
-        assert_eq!(provider.get_default_model(), "gpt-4");
-        assert!(provider.supports_system_messages());
+        // create_provider maps each provider_type to the correct enum variant.
+        assert!(matches!(create_provider(create_test_config("openai")), ProviderEnum::OpenAI(_)));
+        assert!(matches!(create_provider(create_test_config("anthropic")), ProviderEnum::Anthropic(_)));
+        assert!(matches!(create_provider(create_test_config("gemini")), ProviderEnum::Gemini(_)));
+        assert!(matches!(create_provider(create_test_config("ollama")), ProviderEnum::Ollama(_)));
     }
 
     #[test]

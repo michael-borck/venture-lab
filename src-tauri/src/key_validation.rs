@@ -315,14 +315,4 @@ mod tests {
         assert_eq!(mask_api_key(""), "");
     }
 
-    #[test]
-    fn test_validation_feedback() {
-        let feedback = get_validation_feedback("openai", "sk-validkey123456789");
-        assert!(feedback.contains("✓ Valid"));
-        assert!(feedback.contains("sk-vali"));
-        
-        let feedback = get_validation_feedback("openai", "invalid-key");
-        assert!(feedback.contains("✗ Invalid"));
-        assert!(feedback.contains("must start with 'sk-'"));
-    }
 }

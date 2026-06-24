@@ -1,0 +1,9 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default capability for the main window. Grants core IPC so the app's own commands (settings, AI generation, keychain, etc.) are reachable. Plugin commands (fs/shell/http) are NOT granted to the webview unless explicitly added here.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default"
+  ]
+}

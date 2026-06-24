@@ -8,7 +8,6 @@ pub struct APIError {
     pub provider: String,
     pub status_code: Option<u16>,
     pub retry_after: Option<u64>, // seconds
-    pub details: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -58,18 +57,19 @@ impl APIError {
             provider: provider.to_string(),
             status_code: Some(status),
             retry_after,
-            details: body.map(|s| s.to_string()),
         }
     }
 
     pub fn network_error(provider: &str, error: &str) -> Self {
+        // Raw transport errors are useful for debugging but must never reach the UI;
+        // log them here instead of stashing them on the struct.
+        eprintln!("{} network error: {}", provider, error);
         APIError {
             error_type: APIErrorType::NetworkError,
             message: format!("Network error: Unable to connect to {}. Please check your internet connection.", provider),
             provider: provider.to_string(),
             status_code: None,
             retry_after: None,
-            details: Some(error.to_string()),
         }
     }
 

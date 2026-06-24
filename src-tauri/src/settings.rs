@@ -75,6 +75,53 @@ impl AppSettings {
     }
 }
 
+impl AIProviderConfig {
+    /// Validate that base_url is safe before the key is ever sent there.
+    ///
+    /// Requires https, except for loopback hosts (localhost / 127.0.0.1 / 0.0.0.0 / ::1)
+    /// which are allowed over plain http (e.g. a local Ollama server). This stops an
+    /// attacker-controlled or mistyped endpoint from exfiltrating the API key (sent as a
+    /// Bearer / x-api-key header) or receiving it over plaintext.
+    pub fn validate_base_url(&self) -> Result<(), String> {
+        let url = self.base_url.trim();
+        let lower = url.to_ascii_lowercase();
+        let host = host_of(url).to_ascii_lowercase();
+        let is_loopback = matches!(
+            host.as_str(),
+            "localhost" | "127.0.0.1" | "0.0.0.0" | "::1"
+        );
+
+        let scheme_ok = if is_loopback {
+            lower.starts_with("https://") || lower.starts_with("http://")
+        } else {
+            lower.starts_with("https://")
+        };
+
+        if scheme_ok {
+            Ok(())
+        } else {
+            Err(format!(
+                "{} base_url must use https{} (got '{}'). Plain http is only permitted for localhost.",
+                self.provider_type,
+                if is_loopback { " or http (localhost)" } else { "" },
+                self.base_url
+            ))
+        }
+    }
+}
+
+/// Best-effort host extraction from a URL-like string (no extra dependency).
+fn host_of(url: &str) -> &str {
+    let after_scheme = match url.split_once("://") {
+        Some((_, rest)) => rest,
+        None => url,
+    };
+    let end = after_scheme
+        .find(|c: char| c == '/' || c == '?' || c == '#' || c == ':')
+        .unwrap_or(after_scheme.len());
+    &after_scheme[..end]
+}
+
 pub fn get_settings_path(app_handle: &tauri::AppHandle) -> tauri::Result<PathBuf> {
     let app_data_dir = app_handle.path().app_data_dir()?;
     std::fs::create_dir_all(&app_data_dir)?;
@@ -100,6 +147,13 @@ pub async fn load_settings(app_handle: &tauri::AppHandle) -> tauri::Result<AppSe
 }
 
 pub async fn save_settings(app_handle: &tauri::AppHandle, settings: &AppSettings) -> tauri::Result<()> {
+    // Validate base URLs before persisting: a bad endpoint would exfiltrate the API key.
+    for cfg in [&settings.openai, &settings.anthropic, &settings.gemini, &settings.ollama] {
+        cfg.validate_base_url().map_err(|e| tauri::Error::Io(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            e,
+        )))?;
+    }
     let settings_path = get_settings_path(app_handle)?;
     let json = serde_json::to_string_pretty(settings)
         .map_err(|e| tauri::Error::Io(std::io::Error::new(
@@ -148,5 +202,41 @@ mod tests {
         let json = serde_json::to_string(&settings).unwrap();
         let deserialized: AppSettings = serde_json::from_str(&json).unwrap();
         assert_eq!(settings.preferred_provider, deserialized.preferred_provider);
+    }
+
+    fn cfg(base_url: &str) -> AIProviderConfig {
+        AIProviderConfig {
+            provider_type: "test".to_string(),
+            base_url: base_url.to_string(),
+            model: "m".to_string(),
+            enabled: true,
+        }
+    }
+
+    #[test]
+    fn test_validate_base_url_accepts_https() {
+        assert!(cfg("https://api.openai.com/v1").validate_base_url().is_ok());
+        assert!(cfg("https://my-proxy.example.com").validate_base_url().is_ok());
+    }
+
+    #[test]
+    fn test_validate_base_url_accepts_localhost_http() {
+        assert!(cfg("http://localhost:11434").validate_base_url().is_ok());
+        assert!(cfg("http://127.0.0.1:8080").validate_base_url().is_ok());
+        assert!(cfg("https://localhost").validate_base_url().is_ok());
+    }
+
+    #[test]
+    fn test_validate_base_url_rejects_plaintext_non_localhost() {
+        let err = cfg("http://api.openai.com/v1").validate_base_url();
+        assert!(err.is_err(), "plain http to a remote host must be rejected");
+        assert!(err.unwrap_err().contains("https"));
+    }
+
+    #[test]
+    fn test_validate_base_url_rejects_garbage() {
+        assert!(cfg("not-a-url").validate_base_url().is_err());
+        assert!(cfg("ftp://example.com").validate_base_url().is_err());
+        assert!(cfg("").validate_base_url().is_err());
     }
 }
