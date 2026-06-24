@@ -46,7 +46,28 @@ VentureLab transforms the way people learn entrepreneurship by providing AI-powe
 - **Offline Capable**: Works with local AI models via Ollama
 - **Export Functionality**: Save and share your work
 
-## 🚀 Getting Started
+## 📥 Download
+
+The easiest way to get started is to download a ready-to-run installer from the
+[**Releases page**](https://github.com/michael-borck/venture-lab/releases/latest).
+Pre-built packages are published automatically for every release:
+
+| Platform | Download |
+|----------|----------|
+| **Windows** (x64) | `.msi` installer or `setup.exe` |
+| **macOS** (Apple Silicon) | `.dmg` (aarch64) |
+| **macOS** (Intel) | `.dmg` (x64) |
+| **Linux** (x64) | `.AppImage` (universal) or `.deb` package |
+
+After installing, launch VentureLab, open **Settings**, choose your AI provider, and
+securely store your API key (it's saved in your OS keychain).
+
+> On macOS you may need to right-click the app and choose **Open** the first time, as
+> the build is not notarized.
+
+## 🚀 Getting Started (Build from Source)
+
+Prefer to build it yourself or want to contribute? Follow the developer setup below.
 
 ### Prerequisites
 
@@ -58,8 +79,8 @@ VentureLab transforms the way people learn entrepreneurship by providing AI-powe
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/venturelab.git
-   cd venturelab
+   git clone https://github.com/michael-borck/venture-lab.git
+   cd venture-lab
    ```
 
 2. **Install dependencies:**
@@ -75,13 +96,13 @@ VentureLab transforms the way people learn entrepreneurship by providing AI-powe
 
 4. **Run the development version:**
    ```bash
-   npm run tauri dev
+   npm run tauri:dev
    ```
 
 ### Building for Production
 
 ```bash
-npm run tauri build
+npm run tauri:build
 ```
 
 ## 🔧 Configuration
