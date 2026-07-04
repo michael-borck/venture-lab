@@ -1,246 +1,151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VentureLab Documentation</title>
-    <style>
-        :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-            --text-color: #333;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --border-color: #e1e5e9;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
-            color: var(--text-color);
-            background-color: var(--bg-color);
-        }
-        
-        .header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 3rem 0;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-        
-        .doc-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-        
-        .doc-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 2rem;
-            transition: transform 0.2s, box-shadow 0.2s;
-            text-decoration: none;
-            color: inherit;
-            display: block;
-        }
-        
-        .doc-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-        }
-        
-        .doc-card h3 {
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-        }
-        
-        .doc-card .icon {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-        
-        .doc-card p {
-            color: #666;
-            line-height: 1.5;
-        }
-        
-        .section {
-            margin: 3rem 0;
-        }
-        
-        .section h2 {
-            color: var(--text-color);
-            margin-bottom: 1.5rem;
-            font-size: 2rem;
-            text-align: center;
-        }
-        
-        .quick-links {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            margin: 2rem 0;
-            border: 1px solid var(--border-color);
-        }
-        
-        .quick-links ul {
-            list-style: none;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-        }
-        
-        .quick-links li a {
-            color: var(--primary-color);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem;
-            border-radius: 6px;
-            transition: background-color 0.2s;
-        }
-        
-        .quick-links li a:hover {
-            background-color: var(--bg-color);
-        }
-        
-        .footer {
-            text-align: center;
-            padding: 2rem;
-            color: #666;
-            border-top: 1px solid var(--border-color);
-            margin-top: 4rem;
-        }
-        
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .doc-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VentureLab — Where AI meets entrepreneurship</title>
+  <meta name="description" content="VentureLab is a free, open-source desktop app for entrepreneurship education. Generate business ideas, research markets, practice your pitch, and draft PRDs — with the AI provider of your choice, including fully local Ollama." />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <header class="header">
-        <h1>🚀 VentureLab Documentation</h1>
-        <p>Your guide to AI-powered entrepreneurship</p>
-    </header>
-    
-    <div class="container">
-        <section class="quick-links">
-            <h2>Quick Links</h2>
-            <ul>
-                <li><a href="quick-start.html">🏃 Quick Start Guide</a></li>
-                <li><a href="ai-provider-setup.html">🤖 AI Provider Setup</a></li>
-                <li><a href="security-best-practices.html">🔐 Security Best Practices</a></li>
-                <li><a href="cost-management.html">💰 Cost Management</a></li>
-                <li><a href="troubleshooting.html">🔧 Troubleshooting</a></li>
-                <li><a href="faq.html">❓ FAQ</a></li>
-            </ul>
-        </section>
-        
-        <section class="section">
-            <h2>Getting Started</h2>
-            <div class="doc-grid">
-                <a href="quick-start.html" class="doc-card">
-                    <div class="icon">🏃</div>
-                    <h3>Quick Start</h3>
-                    <p>Get up and running with VentureLab in 5 minutes. Learn the basics and generate your first business idea.</p>
-                </a>
-                
-                <a href="ai-provider-setup.html" class="doc-card">
-                    <div class="icon">🤖</div>
-                    <h3>AI Provider Setup</h3>
-                    <p>Detailed setup instructions for Ollama, OpenAI, Anthropic, and Google Gemini. Choose the right provider for your needs.</p>
-                </a>
-                
-                <a href="provider-comparison.html" class="doc-card">
-                    <div class="icon">⚖️</div>
-                    <h3>Provider Comparison</h3>
-                    <p>Compare features, pricing, and performance of different AI providers to make an informed choice.</p>
-                </a>
-            </div>
-        </section>
-        
-        <section class="section">
-            <h2>Essential Guides</h2>
-            <div class="doc-grid">
-                <a href="security-best-practices.html" class="doc-card">
-                    <div class="icon">🔐</div>
-                    <h3>Security Best Practices</h3>
-                    <p>Keep your API keys safe and learn about VentureLab's security features. Essential reading for all users.</p>
-                </a>
-                
-                <a href="cost-management.html" class="doc-card">
-                    <div class="icon">💰</div>
-                    <h3>Cost Management</h3>
-                    <p>Monitor and control your AI costs. Learn optimization strategies and budget recommendations.</p>
-                </a>
-                
-                <a href="prompt-engineering.html" class="doc-card">
-                    <div class="icon">🎯</div>
-                    <h3>Prompt Engineering</h3>
-                    <p>Master the art of writing effective prompts to get better results from AI models.</p>
-                </a>
-            </div>
-        </section>
-        
-        <section class="section">
-            <h2>Support & Reference</h2>
-            <div class="doc-grid">
-                <a href="troubleshooting.html" class="doc-card">
-                    <div class="icon">🔧</div>
-                    <h3>Troubleshooting</h3>
-                    <p>Solutions to common issues. Find fixes for connection problems, API errors, and more.</p>
-                </a>
-                
-                <a href="faq.html" class="doc-card">
-                    <div class="icon">❓</div>
-                    <h3>FAQ</h3>
-                    <p>Frequently asked questions about VentureLab, AI providers, costs, and technical details.</p>
-                </a>
-                
-                <a href="acknowledgements.html" class="doc-card">
-                    <div class="icon">🙏</div>
-                    <h3>Acknowledgements</h3>
-                    <p>Open source projects and licenses that make VentureLab possible.</p>
-                </a>
-            </div>
-        </section>
+
+  <nav class="topnav">
+    <div class="container topnav-inner">
+      <span class="brand">🚀 Venture<span class="brand-accent">Lab</span></span>
+      <div class="topnav-links">
+        <a href="documentation.html">Documentation</a>
+        <a href="https://github.com/michael-borck/venture-lab">GitHub</a>
+        <a href="#download" class="nav-cta">Download</a>
+      </div>
     </div>
-    
-    <footer class="footer">
-        <p>VentureLab Documentation | <a href="https://github.com/michael-borck/venture-lab">GitHub Repository</a></p>
-    </footer>
+  </nav>
+
+  <header class="hero" id="top">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">AI-powered entrepreneurship education</p>
+        <h1>From spark to pitch, <em>in one desktop app.</em></h1>
+        <p class="sub">VentureLab gives students and founders four AI tools for the journey:
+          forge business ideas, scan global markets, rehearse the pitch, and write the
+          product requirements — all on your own machine, with the AI provider you choose.</p>
+
+        <div class="download-block" id="download">
+          <a id="download-btn" class="btn btn-primary" href="https://github.com/michael-borck/venture-lab/releases/latest">Download</a>
+          <div class="platform-toggle" role="group" aria-label="Choose platform">
+            <button data-platform="mac" class="platform-btn">macOS</button>
+            <button data-platform="windows" class="platform-btn">Windows</button>
+            <button data-platform="linux" class="platform-btn">Linux</button>
+          </div>
+          <p class="version"><span id="version">&nbsp;</span> <a id="alt-asset" class="alt-asset" href="#" hidden></a></p>
+          <p class="platform-note" id="platform-note" hidden>macOS may warn that the app is from an
+            unidentified developer — right-click the app and choose <strong>Open</strong>.</p>
+          <p class="all-releases"><a href="https://github.com/michael-borck/venture-lab/releases">All releases &amp; other formats →</a></p>
+        </div>
+
+        <p class="local-tag">Free &amp; open source (MIT). Works fully offline with Ollama —
+          no account, no subscription, and your API keys stay in your OS keychain.</p>
+      </div>
+
+      <div class="hero-shots">
+        <!-- Screenshots auto-discovered from screenshots/venture-lab-1.png, -2.png, -3.png…
+             Drop a new numbered PNG in docs/screenshots/ and it joins the rotation. -->
+        <div class="carousel" id="carousel" aria-label="App screenshots">
+          <!-- Shown until real screenshots exist; app.js removes it when it finds any. -->
+          <div class="mock-preview" id="mock-preview">
+            <div class="mock-tile"><span>🔥</span>Idea Forge</div>
+            <div class="mock-tile"><span>🌍</span>Global Compass</div>
+            <div class="mock-tile"><span>🎤</span>Pitch Perfect</div>
+            <div class="mock-tile"><span>📋</span>PRD Generator</div>
+          </div>
+        </div>
+        <div class="carousel-dots" id="carousel-dots"></div>
+      </div>
+    </div>
+  </header>
+
+  <section class="container tools">
+    <h2>Four tools for the founder's journey</h2>
+    <div class="grid two">
+      <div class="card tool-card" style="--accent: linear-gradient(135deg, #ff6b6b, #ff8e53)">
+        <div class="tool-icon">🔥</div>
+        <h3>Idea Forge</h3>
+        <p>Generate innovative business ideas with AI-powered brainstorming. A creativity
+          dial lets you range from safe and sensible to wonderfully weird.</p>
+      </div>
+      <div class="card tool-card" style="--accent: linear-gradient(135deg, #4facfe, #00f2fe)">
+        <div class="tool-icon">🌍</div>
+        <h3>Global Compass</h3>
+        <p>Analyse market opportunities across regions and industries with AI-driven
+          insights — market size, competition, cultural factors, and entry strategy.</p>
+      </div>
+      <div class="card tool-card" style="--accent: linear-gradient(135deg, #ff9a9e, #fecfef)">
+        <div class="tool-icon">🎤</div>
+        <h3>Pitch Perfect</h3>
+        <p>Rehearse your pitch and get coaching: scores, strengths, and concrete
+          improvement suggestions before you face a real audience.</p>
+      </div>
+      <div class="card tool-card" style="--accent: linear-gradient(135deg, #a8edea, #fed6e3)">
+        <div class="tool-icon">📋</div>
+        <h3>PRD Generator</h3>
+        <p>Turn an idea into a comprehensive Product Requirements Document through a
+          guided, step-by-step AI workflow.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="providers-band">
+    <div class="container">
+      <h2>Bring your own AI</h2>
+      <p class="band-sub">VentureLab talks to the provider you configure — one settings tab each,
+        with a connection test built in.</p>
+      <div class="grid four">
+        <div class="card plain">
+          <h3>Ollama</h3>
+          <p>The default. Runs models locally on your machine — free, private, and fully offline.</p>
+        </div>
+        <div class="card plain">
+          <h3>OpenAI</h3>
+          <p>GPT models via your own API key, with usage tracked so costs never surprise you.</p>
+        </div>
+        <div class="card plain">
+          <h3>Anthropic</h3>
+          <p>Claude models for thoughtful long-form coaching and analysis.</p>
+        </div>
+        <div class="card plain">
+          <h3>Google Gemini</h3>
+          <p>Gemini models with a generous free tier — a good classroom starting point.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container trust">
+    <div class="trust-grid">
+      <div>
+        <h2>Built for classrooms, safe by design</h2>
+        <p>VentureLab was made for entrepreneurship education — which means it has to be
+          cheap to run, easy to install, and careful with credentials.</p>
+      </div>
+      <ul class="trust-list">
+        <li><strong>Keys in the keychain.</strong> API keys live in your OS keychain, never in config files.</li>
+        <li><strong>Usage tracking built in.</strong> See exactly what each tool and provider costs.</li>
+        <li><strong>Customisable prompts.</strong> Every tool's prompt template can be edited to fit your course.</li>
+        <li><strong>Open source.</strong> MIT-licensed, auditable, yours to fork.</li>
+      </ul>
+    </div>
+    <p class="docs-pointer">Setup guides, provider comparisons, and troubleshooting live in the
+      <a href="documentation.html">documentation</a>.</p>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <a href="documentation.html">Documentation</a>
+      <a href="https://github.com/michael-borck/venture-lab">GitHub</a>
+      <a href="https://github.com/michael-borck/venture-lab/releases">Releases</a>
+      <span class="copyright">MIT © Michael Borck</span>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
 </body>
 </html>

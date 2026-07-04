@@ -18,3 +18,4 @@ navigation:
 # Exclude files
 exclude:
   - README.md
+  - screenshots/README.md
