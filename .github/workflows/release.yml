@@ -65,6 +65,13 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS code signing + notarization (no-ops on linux/windows)
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'VentureLab ${{ github.ref_name }}'
@@ -101,7 +108,7 @@ jobs:
             ### macOS
             1. Download the appropriate `.dmg` file for your Mac
             2. Open the DMG and drag VentureLab to Applications
-            3. Launch from Applications (you may need to allow in Security & Privacy settings)
+            3. Launch from Applications — builds are code signed and notarized by Apple, so they open normally
             
             ### Linux
             1. **Debian/Ubuntu**: Download `.deb` file and run `sudo dpkg -i VentureLab_*.deb`

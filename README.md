@@ -62,8 +62,8 @@ Pre-built packages are published automatically for every release:
 After installing, launch VentureLab, open **Settings**, choose your AI provider, and
 securely store your API key (it's saved in your OS keychain).
 
-> On macOS you may need to right-click the app and choose **Open** the first time, as
-> the build is not notarized.
+> macOS builds are code signed and notarized by Apple, so they open normally on
+> first launch.
 
 ## 🚀 Getting Started (Build from Source)
 
