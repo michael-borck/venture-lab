@@ -1,3 +1,4 @@
+# Shared release pipeline: michael-borck/app-hq/.github/workflows/tauri-release.yml
 name: Release desktop
 
 on:
@@ -10,7 +11,7 @@ permissions:
 
 jobs:
   release:
-    uses: michael-borck/actions/.github/workflows/tauri-release.yml@main
+    uses: michael-borck/app-hq/.github/workflows/tauri-release.yml@main
     with:
       product-name: VentureLab
       preflight-command: npm run build
