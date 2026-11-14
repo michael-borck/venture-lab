@@ -1,9 +1,8 @@
-name: Release Build
+name: Release desktop
 
 on:
   push:
-    tags:
-      - 'v*'  # Trigger on version tags like v1.0.0, v2.1.3, etc.
+    tags: ['v*']
   workflow_dispatch:
 
 permissions:
@@ -11,179 +10,16 @@ permissions:
 
 jobs:
   release:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
-            arch: 'aarch64'
-            os: 'macos'
-          - platform: 'macos-latest'
-            args: '--target x86_64-apple-darwin'
-            arch: 'x86_64'
-            os: 'macos'
-          - platform: 'ubuntu-22.04'
-            args: ''
-            arch: 'x86_64'
-            os: 'linux'
-          - platform: 'windows-latest'
-            args: ''
-            arch: 'x86_64'
-            os: 'windows'
-
-    runs-on: ${{ matrix.platform }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install dependencies (Ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-
-      - name: Rust setup
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform == 'macos-latest' && (matrix.arch == 'aarch64' && 'aarch64-apple-darwin' || 'x86_64-apple-darwin') || '' }}
-
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './src-tauri -> target'
-
-      - name: Sync node version and setup cache
-        uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-          cache: 'npm'
-
-      - name: Install frontend dependencies
-        run: npm ci
-
-      - name: Prepare App Store Connect API key
-        if: startsWith(matrix.platform, 'macos')
-        env:
-          APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
-          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-        run: |
-          if [ -n "$APPLE_API_KEY_CONTENT" ] && [ -n "$APPLE_API_KEY" ]; then
-            mkdir -p ~/.appstoreconnect/private_keys
-            printf '%s' "$APPLE_API_KEY_CONTENT" | openssl base64 -d -A > ~/.appstoreconnect/private_keys/AuthKey_${APPLE_API_KEY}.p8
-            chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APPLE_API_KEY}.p8
-          else
-            echo "No API key secrets; notarization will fall back to Apple ID"
-          fi
-
-      - name: Build the app
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # macOS code signing + notarization (no-ops on linux/windows)
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        with:
-          tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
-          releaseName: ${{ startsWith(github.ref, 'refs/tags/') && format('VentureLab {0}', github.ref_name) || '' }}
-          releaseBody: |
-            🚀 **VentureLab ${{ github.ref_name }}**
-            
-            **AI-Powered Entrepreneurship Toolkit**
-            
-            ## What's New
-            - See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for detailed changes
-            
-            ## Downloads
-            Choose the appropriate version for your operating system:
-            
-            ### Windows
-            - **VentureLab_${{ github.ref_name }}_x64_en-US.msi** - Windows Installer (Recommended)
-            - **VentureLab_${{ github.ref_name }}_x64-setup.exe** - Windows Setup Executable
-            
-            ### macOS
-            - **VentureLab_${{ github.ref_name }}_aarch64.dmg** - Apple Silicon (M1/M2/M3 Macs)
-            - **VentureLab_${{ github.ref_name }}_x64.dmg** - Intel Macs
-            
-            ### Linux
-            - **VentureLab_${{ github.ref_name }}_amd64.deb** - Debian/Ubuntu (Recommended)
-            - **VentureLab_${{ github.ref_name }}_amd64.AppImage** - Universal Linux AppImage
-            
-            ## Installation Instructions
-            
-            ### Windows
-            1. Download the `.msi` installer
-            2. Run the installer and follow the setup wizard
-            3. Launch VentureLab from the Start Menu
-            
-            ### macOS
-            1. Download the appropriate `.dmg` file for your Mac
-            2. Open the DMG and drag VentureLab to Applications
-            3. Launch from Applications — builds are code signed and notarized by Apple, so they open normally
-            
-            ### Linux
-            1. **Debian/Ubuntu**: Download `.deb` file and run `sudo dpkg -i VentureLab_*.deb`
-            2. **Other distros**: Download `.AppImage`, make executable with `chmod +x`, then run
-            
-            ## Features
-            - 🔥 **Idea Forge** - AI-powered business idea generation
-            - 🌍 **Global Compass** - International market research and analysis
-            - 🎤 **Pitch Perfect** - AI coaching for investor presentations
-            - 📋 **PRD Generator** - Product Requirements Document creation
-            - 🔐 **Secure API Key Management** - OS-native keychain integration
-            - 📊 **Usage Tracking** - Monitor AI costs and token usage
-            - 🧠 **Custom Prompts** - Advanced prompt engineering tools
-            - 📚 **Educational Resources** - Built-in documentation and tips
-            
-            ## AI Provider Support
-            - **Ollama** (Free, runs locally)
-            - **OpenAI** (GPT-3.5, GPT-4)
-            - **Anthropic** (Claude)
-            - **Google Gemini**
-            
-            ## Support
-            - 📖 [Documentation](https://github.com/${{ github.repository }}/tree/main/docs)
-            - 🐛 [Report Issues](https://github.com/${{ github.repository }}/issues)
-            - 💬 [Discussions](https://github.com/${{ github.repository }}/discussions)
-            
-            ---
-            
-            **First time using VentureLab?** Start with Ollama for free AI access, then explore our built-in templates and tips!
-          releaseDraft: false
-          prerelease: false
-          args: ${{ matrix.args }}
-
-      - name: Upload artifacts (manual runs)
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: venturelab-${{ matrix.platform }}-${{ strategy.job-index }}
-          path: |
-            src-tauri/target/**/release/bundle/**/*.dmg
-            src-tauri/target/**/release/bundle/**/*.app.tar.gz
-            src-tauri/target/**/release/bundle/**/*.AppImage
-            src-tauri/target/**/release/bundle/**/*.deb
-            src-tauri/target/**/release/bundle/**/*.msi
-            src-tauri/target/**/release/bundle/**/*.exe
-          if-no-files-found: warn
-          retention-days: 5
-
-  # Create a summary job that depends on all builds
-  release-summary:
-    needs: release
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Check build results
-        run: |
-          if [[ "${{ needs.release.result }}" == "success" ]]; then
-            echo "✅ All platform builds completed successfully!"
-            echo "🎉 Release ${{ github.ref_name }} is now available for download"
-          else
-            echo "❌ Some builds failed. Check the logs above."
-            exit 1
-          fi
+    uses: michael-borck/actions/.github/workflows/tauri-release.yml@main
+    with:
+      product-name: VentureLab
+      preflight-command: npm run build
+      updater: false
+    secrets:
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+      APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
